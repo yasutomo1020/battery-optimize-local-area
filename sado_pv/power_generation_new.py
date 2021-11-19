@@ -476,4 +476,4 @@ plt.grid()
 
 plt.show()
 
-print("終了\n")
+print("終了しました。\n")
