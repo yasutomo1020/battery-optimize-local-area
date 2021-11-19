@@ -48,7 +48,8 @@ end
 elseif type == "heatmap"
     a=figure('Name',num2str(figure_name),'NumberTitle','on','Units','normalized','OuterPosition',pos);
     b=heatmap(data,'xlabel',xlabel_name,'ylabel',ylabel_name) ;
-    b.XDisplayLabels ={'\it P_{R}^{disch}','\it P_{C}^{disch}' ,'\it P_{I}^{disch}', '\it P_{R}^{ch}','\it P_{C}^{ch}' ,'\it P_{I}^{ch}','\it P_{RC}^{dist}','\it P_{CI}^{dist}','\it P_{IR}^{dist}','\it P_{CR}^{dist}','\it P_{IC}^{dist}','\it P_{RI}^{dist}'};
+   %     b.XDisplayLabels ={'\it P_{R}^{disch}','\it P_{C}^{disch}' ,'\it P_{I}^{disch}', '\it P_{R}^{ch}','\it P_{C}^{ch}' ,'\it P_{I}^{ch}','\it P_{RC}^{dist}','\it P_{CI}^{dist}','\it P_{IR}^{dist}','\it P_{CR}^{dist}','\it P_{IC}^{dist}','\it P_{RI}^{dist}'};
+    b.XDisplayLabels ={'\it P_{R}^{disch}','\it P_{C}^{disch}' ,'\it P_{I}^{disch}', '\it P_{R}^{ch}','\it P_{C}^{ch}' ,'\it P_{I}^{ch}','\it P_{RC}^{dist}','\it P_{CI}^{dist}','\it P_{IR}^{dist}','\it P_{CR}^{dist}','\it P_{IC}^{dist}','\it P_{RI}^{dist}','\it P_{R}^{bass}','\it P_{C}^{bass}','\it P_{I}^{bass}'};
    % b.YDisplayData = [6:24 1:5];
    b.YDisplayLabels = [6:24 1:5];
   % b.OuterPosition=[0 0 1 1.2];
