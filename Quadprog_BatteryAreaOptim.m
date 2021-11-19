@@ -50,10 +50,10 @@ ub=[ub(:);Inf*ones(nPeriods,1);];
 %% 目的関数
 f=zeros(nPeriods,nArea*2);%電力量変数設定、排他条件設定
 f=[f;zeros(nPeriods,factorial(nArea));].';
-f=[f(:);zeros(nPeriods,1);];%変数z（目的関数）
+f=[f(:);1*ones(nPeriods,1);];%変数z（目的関数）
 H=zeros(size(f,1));
 for i=nPeriods*nArea*2*2:nPeriods*nArea*2*2+nPeriods
-   H(i,i)=1;
+   H(i,i)=0;
 end
 
 for i=1:nPeriods*nArea*2*2

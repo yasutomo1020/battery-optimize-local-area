@@ -4,7 +4,7 @@ dt = datetime('now');
 
 DateString = datestr(dt,'yyyy年mm月dd日HH時MM分ss秒FFF');
 disp(DateString)
-clear;
+%clear;
 close all;
 load('const.mat');
 
@@ -24,8 +24,8 @@ pv_capacity=6;%基準PV容量
 pv_out=pv_capacity*[1 2.1301 2.1988].*pv_out*pv_rate;%住宅を１として、屋根面積比で計算
 netload=demand_data+ev_out*evload_rate*Area_ev.*Area_demand-pv_out.*Area_demand;%ネットロード計算
 need_power=netload;
-%levelling_level=mean(demand_data);%目標のレベル
-levelling_level=mean(netload);
+levelling_level=mean(demand_data);%目標のレベル
+%levelling_level=mean(netload);
 %levelling_level=400;
 initial_soc=0.5;%初期SOC
 pws_capacity=Inf;%配電容量
