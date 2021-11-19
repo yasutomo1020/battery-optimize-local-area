@@ -53,7 +53,6 @@ f=b_w*ones(nPeriods,nArea*2);%電力量変数設定、排他条件設定
 f=[f;d_w*ones(nPeriods,factorial(nArea));].';
 f=[f(:);ones(nPeriods,1);zeros];%変数z（目的関数）
 f=[f;zeros(nPeriods*nArea,1)];
-% f=[f f f f];
 
 %% 不等式制約
 one_tril=tril(ones(nPeriods));%階段行列
