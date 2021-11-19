@@ -106,7 +106,7 @@ beq=[0;0;0;];
 %Aeq=[];beq=[];
 
 %% 整数制約
-intcon=[];
+intcon=(nPeriods*nArea*4+nPeriods):(nPeriods*nArea*4+nPeriods+nPeriods*nArea);
 
 %% 最適化
 options =[];
