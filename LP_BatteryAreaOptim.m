@@ -51,19 +51,19 @@ ub=[ub(:);Inf*ones(nPeriods,1);ones(nPeriods*nArea,1)];
 %% 目的関数
 f=b_w*ones(nPeriods,nArea*2);%電力量変数設定、排他条件設定
 f=[f;d_w*ones(nPeriods,factorial(nArea));].';
-f=[f(:);ones(nPeriods,1);zeros];%変数z（目的関数）
+f=[f(:);ones(nPeriods,1)];%変数z（目的関数）
 f=[f;zeros(nPeriods*nArea,1)];
 
 %% 不等式制約
 one_tril=tril(ones(nPeriods));%階段行列
 one_eye=eye(nPeriods);%単位行列
 zero_1=zeros(nPeriods);%零行列
-A1_eye=cat(2,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,one_eye,zero_1,-one_eye,zero_1);
-A2_eye=cat(2,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1);
-A3_eye=cat(2,zero_1,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1);
-A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A1_eye=cat(2,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,one_eye,zero_1,-one_eye,zero_1,zero_1,zero_1,zero_1);
+A2_eye=cat(2,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,zero_1,zero_1);
+A3_eye=cat(2,zero_1,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,zero_1);
+A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 %蓄電池容量制約ver.2（SOCまだ）
 % A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,one_tril,zero_1,-one_tril,zero_1);
 % A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,-one_tril,zero_1,-one_tril,one_tril,zero_1,zero_1);
@@ -78,8 +78,8 @@ b_cap=[b_l(:);b_h(:);];
 A_load=cat(1,A1_eye,A2_eye,A3_eye);
 b_load=need_power(:);%必要電力量（ネットロード）
 %目的関数設定制約
-A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye];
-A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye];
+A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1];
+A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1];
 
 b_f_1=A_w*sum((netload-levelling_level).').';
 b_f_2=A_w*sum((-netload+levelling_level).').';
@@ -97,9 +97,9 @@ b=[sw_c*b_cap;sw_l*b_load;b_f];
 % Aeq1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,one_tril,zero_1,zero_1,zero_1,zero_1,one_tril,zero_1);
 % Aeq2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,one_tril,zero_1,one_tril,zero_1,zero_1,zero_1);
 % Aeq3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,one_tril,zero_1,one_tril,zero_1,zero_1);
-Aeq1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-Aeq2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-Aeq3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+Aeq1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+Aeq2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+Aeq3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 %初期充電量制約（最初と最後を比較して蓄電池残量変化なし）
 Aeq=[Aeq1_tril(24,:);Aeq2_tril(24,:);Aeq3_tril(24,:);];
 beq=[0;0;0;];
