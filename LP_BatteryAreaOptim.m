@@ -5,7 +5,7 @@ dt = datetime('now');
 DateString = datestr(dt,'yyyy年mm月dd日HH時MM分ss秒FFF');
 disp(DateString)
 %clear;
-close all;a
+close all;
 load('const.mat');
 
 %% 定数変数定義、検討条件
