@@ -50,10 +50,10 @@ ub=[ub(:);Inf*ones(nPeriods,1);];
 %% 目的関数
 f=zeros(nPeriods,nArea*2);%電力量変数設定、排他条件設定
 f=[f;zeros(nPeriods,factorial(nArea));].';
-f=[f(:);1*ones(nPeriods,1);];%変数z（目的関数）
+f=[f(:);0*ones(nPeriods,1);];%変数z（目的関数）
 H=zeros(size(f,1));
 for i=nPeriods*nArea*2*2:nPeriods*nArea*2*2+nPeriods
-   H(i,i)=0;
+   H(i,i)=1;
 end
 
 for i=1:nPeriods*nArea*2*2
@@ -186,7 +186,6 @@ fprintf('MAE\n最適化前：%g\n最適化後：%g\n',string(round(mae(before_fl
 fprintf('RMSE\n最適化前：%g\n最適化後：%g\n',string(round(rms(sum(before_flow.').',sum(levelling_level)),4)),string(round(rms(sum(after_flow.').',sum(levelling_level)),4)));
      
     %% figure出力
-    load const.mat;
     save=1;
     %figure_out('plot','ネットロード',netload,[0 25],[-3000 3000],'Time [hour]','netload[kWh]',[1.25 0.0 0.25 0.3],["Residential";"Commercial";"Industrial"],save)
     figure_out('plot','SOC推移（QP）',socx,[1 25],[0 1],'Time [hour]','State Of Charge',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],[],save)
