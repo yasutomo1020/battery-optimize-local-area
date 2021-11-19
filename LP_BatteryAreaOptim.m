@@ -184,7 +184,7 @@ fprintf('RMSE\n最適化前：%g\n最適化後：%g\n',string(round(rms(sum(befo
     %figure_out('bar','最適化前flow',before_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.25 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     %figure_out('bar','最適化後flow',after_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.0 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     figure_out('plot','最適化結果（LP）',result_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kW]',[1.0 0.55 0.25 0.4],["最適化前","最適化後"],{'#FFE13C','#FFB400'},save)
-    % yyaxis right
+    % yyaxis right 
     % hold on
     % plot(pv_out,'r','LineWidth',3)
     
