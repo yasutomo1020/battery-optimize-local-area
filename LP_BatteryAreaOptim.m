@@ -24,7 +24,7 @@ pv_capacity=6;%基準PV容量
 pv_out=pv_capacity*[1 2.1301 2.1988].*pv_out*pv_rate;%住宅を１として、屋根面積比で計算
 netload=demand_data+ev_out*evload_rate*Area_ev.*Area_demand-pv_out.*Area_demand;%ネットロード計算
 need_power=netload;
-levelling_level=mean(demand_data);%目標のレベル
+%levelling_level=mean(demand_data);%目標のレベル
 levelling_level=mean(netload);
 %levelling_level=400;
 initial_soc=0.5;%初期SOC
@@ -38,9 +38,9 @@ before_flow=demand_data+ev_out*Area_ev.*Area_demand;%EV負荷含む潮流
 %% 解の上下限設定
 battery_out=3*(Area_ev.*Area_demand);
 lb=[zeros(nPeriods,6) zeros(nPeriods,6)];
-lb=[lb(:);-Inf*ones(nPeriods,1);];
+lb=[lb(:);-Inf*ones(nPeriods,1);zeros(nPeriods*nArea,1)];
 ub=[ones(nPeriods,6).*[battery_out battery_out] pws_capacity*ones(nPeriods,6)];
-ub=[ub(:);Inf*ones(nPeriods,1);];
+ub=[ub(:);Inf*ones(nPeriods,1);ones(nPeriods*nArea,1)];
 % lb=[-ones(nPeriods,3).*battery_out zeros(nPeriods,3) -ones(nPeriods,3).*pws_capacity zeros(nPeriods,3)];
 % lb=[lb(:);-Inf*ones(nPeriods,1);];
 % ub=[ones(nPeriods,3).*battery_out zeros(nPeriods,3) ones(nPeriods,3).*pws_capacity zeros(nPeriods,3)];
@@ -51,7 +51,8 @@ ub=[ub(:);Inf*ones(nPeriods,1);];
 %% 目的関数
 f=b_w*ones(nPeriods,nArea*2);%電力量変数設定、排他条件設定
 f=[f;d_w*ones(nPeriods,factorial(nArea));].';
-f=[f(:);ones(nPeriods,1);];%変数z（目的関数）
+f=[f(:);ones(nPeriods,1);zeros];%変数z（目的関数）
+f=[f;zeros(nPeriods*nArea,1)];
 % f=[f f f f];
 
 %% 不等式制約
@@ -180,7 +181,7 @@ fprintf('RMSE\n最適化前：%g\n最適化後：%g\n',string(round(rms(sum(befo
     %% figure出力
     save=1;
     %figure_out('plot','ネットロード',netload,[0 25],[-3000 3000],'Time [hour]','netload[kWh]',[1.25 0.0 0.25 0.3],["Residential";"Commercial";"Industrial"],save)
-    figure_out('plot','SOC推移（LP）',socx,[1 25],[0 1],'Time [hour]','SOC',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],[],save)
+    figure_out('plot','SOC推移（LP）',socx,[1 25],[0 1],'Time [hour]','State Of Charge',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],[],save)
     %figure_out('bar','最適化前flow',before_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.25 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     %figure_out('bar','最適化後flow',after_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.0 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     figure_out('plot','最適化結果（LP）',result_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kW]',[1.0 0.55 0.25 0.4],["最適化前","最適化後"],{'#FFE13C','#FFB400'},save)
