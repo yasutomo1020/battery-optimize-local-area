@@ -41,10 +41,6 @@ lb=[zeros(nPeriods,6) zeros(nPeriods,6)];
 lb=[lb(:);-Inf*ones(nPeriods,1);zeros(nPeriods*nArea,1)];
 ub=[ones(nPeriods,6).*[battery_out battery_out] pws_capacity*ones(nPeriods,6)];
 ub=[ub(:);Inf*ones(nPeriods,1);ones(nPeriods*nArea,1)];
-% lb=[-ones(nPeriods,3).*battery_out zeros(nPeriods,3) -ones(nPeriods,3).*pws_capacity zeros(nPeriods,3)];
-% lb=[lb(:);-Inf*ones(nPeriods,1);];
-% ub=[ones(nPeriods,3).*battery_out zeros(nPeriods,3) ones(nPeriods,3).*pws_capacity zeros(nPeriods,3)];
-% ub=[ub(:);Inf*ones(nPeriods,1);];
 % lb=[];
 % ub=[];
 
@@ -80,10 +76,8 @@ b_load=need_power(:);%必要電力量（ネットロード）
 %目的関数設定制約
 A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1];
 A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1];
-
 b_f_1=A_w*sum((netload-levelling_level).').';
 b_f_2=A_w*sum((-netload+levelling_level).').';
-%b_f_3=zeros(nPeriods,1);
 A_f=[A_f_1;A_f_2;];
 b_f=[b_f_1;b_f_2;];
 %制約条件まとめ
@@ -134,18 +128,6 @@ if isempty(fval)==0
         end
     end
     outx=round(outx,2);
-    % afterflow=zeros(nPeriods,3);
-    % for n=1:3
-    %     for h=1:nPeriods
-    %         afterflow(h,n)=outx(h,n)-outx(h,n+3)+outx(h,n+6)-outx(h,n+9);
-    %     end
-    % end
-    % outx_all=zeros(nPeriods,nArea*2);
-    % for n=1:nArea*2
-    %     for h=1:nPeriods
-    %         outx_all(h,n)=x(h+(n-1)*nPeriods);
-    %     end
-    % end
     
     %% 容量（SOC）計算
     socx=zeros(nPeriods+1,3);
