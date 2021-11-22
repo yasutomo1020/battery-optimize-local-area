@@ -33,6 +33,7 @@ b_w=0.00001;%蓄電池排他制約の重み係数
 d_w=0.001;%エリア間電力融通(配電損失)排他制約重み係数
 A_w=1;%目的関数設定制約条件の重み係数
 bus_out=100;%バスの充放電出力
+bus_cap=500;%バスの容量
 initial_capacity=battery_capacity_area*initial_soc;%初期容量
 before_flow=demand_data+ev_out*Area_ev.*Area_demand;%EV負荷含む潮流
 
@@ -64,18 +65,20 @@ A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_
 A1_bus_tril=cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1);
 A2_bus_tril=cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1);
 A3_bus_tril=cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril);
+A_bus_tril=bus_out*cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_tril,one_tril,one_tril,-one_tril,-one_tril,-one_tril);
+
 %蓄電池容量制約ver.2（SOCまだ）
 % A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,one_tril,zero_1,-one_tril,zero_1);
 % A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,-one_tril,zero_1,-one_tril,one_tril,zero_1,zero_1);
 % A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,-one_tril,zero_1,-one_tril,one_tril,zero_1);
-%蓄電池EV容量制約
-A_cap=cat(1,A1_tril,A2_tril,A3_tril,A1_bus_tril*bus_out,A2_bus_tril*bus_out,A3_bus_tril*bus_out);
+%容量制約
+A_cap=cat(1,A1_tril,A2_tril,A3_tril,A_bus_tril);
 A_cap=[A_cap;-A_cap;];
 b_l=ones(nPeriods,3).*(initial_capacity);%蓄電池容量下限
 b_h=ones(nPeriods,3).*(battery_capacity_area-initial_capacity);%蓄電池容量上限
-b_bus_l=ones(nPeriods,3).*[200 200 200];%蓄電池容量下限
-b_bus_h=ones(nPeriods,3).*[200 200 200];%蓄電池容量上限
-b_cap=[b_l(:);b_h(:);b_bus_l(:);b_bus_h(:);];
+b_bus_l=ones(nPeriods,1).*bus_cap/2;%蓄電池容量下限
+b_bus_h=ones(nPeriods,1).*bus_cap/2;%蓄電池容量上限
+b_cap=[b_l(:);b_bus_l(:);b_h(:);b_bus_h(:);];
 %需給バランス制約
 A_load=cat(1,A1_eye,A2_eye,A3_eye);
 b_load=need_power(:);%必要電力量（ネットロード）
@@ -86,12 +89,16 @@ b_f_1=A_w*sum((netload-levelling_level).').';
 b_f_2=A_w*sum((-netload+levelling_level).').';
 A_f=[A_f_1;A_f_2;];
 b_f=[b_f_1;b_f_2;];
+%バス存在制約(各時刻で複数存在しないように、6時～21時)
+A_bus=cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_eye,one_eye,one_eye,one_eye,one_eye,one_eye);
+b_bus=[ones(nPeriods-8,1);zeros(8,1)];
+
 %制約条件まとめ
 sw_c=1;
 sw_l=1;
-A=[sw_c*A_cap;sw_l*A_load;A_f];
-b=[sw_c*b_cap;sw_l*b_load;b_f];
-%A=[];b=[];
+A=[sw_c*A_cap;sw_l*A_load;A_f;A_bus];
+b=[sw_c*b_cap;sw_l*b_load;b_f;b_bus];
+%A=[];b=[];s
 
 %% 等式制約
 % Aeq1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,one_tril,zero_1,zero_1,zero_1,zero_1,one_tril,zero_1);
