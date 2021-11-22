@@ -32,15 +32,16 @@ pws_capacity=Inf;%配電容量
 b_w=0.00001;%蓄電池排他制約の重み係数
 d_w=0.001;%エリア間電力融通(配電損失)排他制約重み係数
 A_w=1;%目的関数設定制約条件の重み係数
+bus_out=100;%バスの充放電出力
 initial_capacity=battery_capacity_area*initial_soc;%初期容量
 before_flow=demand_data+ev_out*Area_ev.*Area_demand;%EV負荷含む潮流
 
 %% 解の上下限設定
 battery_out=3*(Area_ev.*Area_demand);
 lb=[zeros(nPeriods,6) zeros(nPeriods,6)];
-lb=[lb(:);-Inf*ones(nPeriods,1);zeros(nPeriods*nArea,1)];
+lb=[lb(:);-Inf*ones(nPeriods,1);zeros(nPeriods*nArea*2,1)];
 ub=[ones(nPeriods,6).*[battery_out battery_out] pws_capacity*ones(nPeriods,6)];
-ub=[ub(:);Inf*ones(nPeriods,1);zeros(nPeriods*nArea,1)];
+ub=[ub(:);Inf*ones(nPeriods,1);zeros(nPeriods*nArea*2,1)];
 % lb=[];
 % ub=[];
 
@@ -48,18 +49,18 @@ ub=[ub(:);Inf*ones(nPeriods,1);zeros(nPeriods*nArea,1)];
 f=b_w*ones(nPeriods,nArea*2);%電力量変数設定、排他条件設定
 f=[f;d_w*ones(nPeriods,factorial(nArea));].';
 f=[f(:);ones(nPeriods,1)];%変数z（目的関数）
-f=[f;zeros(nPeriods*nArea,1)];
+f=[f;zeros(nPeriods*nArea*2,1)];
 
 %% 不等式制約
 one_tril=tril(ones(nPeriods));%階段行列
 one_eye=eye(nPeriods);%単位行列
 zero_1=zeros(nPeriods);%零行列
-A1_eye=cat(2,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,one_eye,zero_1,-one_eye,zero_1,zero_1,zero_1,zero_1);
-A2_eye=cat(2,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,zero_1,zero_1);
-A3_eye=cat(2,zero_1,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,zero_1);
-A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A1_eye=cat(2,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,one_eye,zero_1,-one_eye,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A2_eye=cat(2,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A3_eye=cat(2,zero_1,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 %蓄電池容量制約ver.2（SOCまだ）
 % A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,one_tril,zero_1,-one_tril,zero_1);
 % A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,-one_tril,zero_1,-one_tril,one_tril,zero_1,zero_1);
@@ -74,8 +75,8 @@ b_cap=[b_l(:);b_h(:);];
 A_load=cat(1,A1_eye,A2_eye,A3_eye);
 b_load=need_power(:);%必要電力量（ネットロード）
 %目的関数設定制約
-A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1];
-A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1];
+A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1,zero_1,zero_1,zero_1];
+A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1,zero_1,zero_1,zero_1];
 b_f_1=A_w*sum((netload-levelling_level).').';
 b_f_2=A_w*sum((-netload+levelling_level).').';
 A_f=[A_f_1;A_f_2;];
@@ -91,16 +92,16 @@ b=[sw_c*b_cap;sw_l*b_load;b_f];
 % Aeq1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,one_tril,zero_1,zero_1,zero_1,zero_1,one_tril,zero_1);
 % Aeq2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,one_tril,zero_1,one_tril,zero_1,zero_1,zero_1);
 % Aeq3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,one_tril,zero_1,one_tril,zero_1,zero_1);
-Aeq1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-Aeq2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-Aeq3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+Aeq1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+Aeq2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+Aeq3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 %初期充電量制約（最初と最後を比較して蓄電池残量変化なし）
 Aeq=[Aeq1_tril(24,:);Aeq2_tril(24,:);Aeq3_tril(24,:);];
 beq=[0;0;0;];
 %Aeq=[];beq=[];
 
 %% 整数制約
-intcon=(nPeriods*nArea*4+nPeriods):(nPeriods*nArea*4+nPeriods+nPeriods*nArea);
+intcon=(nPeriods*nArea*4+nPeriods):(nPeriods*nArea*4+nPeriods+nPeriods*nArea*2);
 %intcon=[];
 %% 最適化
 options =[];
@@ -121,8 +122,8 @@ toc
 
 %% 解の分解整理
 if isempty(fval)==0
-    outx=zeros(nPeriods,(numel(f)-nPeriods)/nPeriods);
-    for n=1:(numel(f)-nPeriods)/nPeriods
+    outx=zeros(nPeriods,(numel(f))/nPeriods);
+    for n=1:(numel(f))/nPeriods
         for h=1:nPeriods
             outx(h,n)=x(h+(n-1)*nPeriods);
         end
