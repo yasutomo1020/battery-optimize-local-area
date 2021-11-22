@@ -41,7 +41,7 @@ battery_out=3*(Area_ev.*Area_demand);
 lb=[zeros(nPeriods,6) zeros(nPeriods,6)];
 lb=[lb(:);-Inf*ones(nPeriods,1);zeros(nPeriods*nArea*2,1)];
 ub=[ones(nPeriods,6).*[battery_out battery_out] pws_capacity*ones(nPeriods,6)];
-ub=[ub(:);Inf*ones(nPeriods,1);zeros(nPeriods*nArea*2,1)];
+ub=[ub(:);Inf*ones(nPeriods,1);ones(nPeriods*nArea*2,1)];
 % lb=[];
 % ub=[];
 
@@ -55,22 +55,27 @@ f=[f;zeros(nPeriods*nArea*2,1)];
 one_tril=tril(ones(nPeriods));%階段行列
 one_eye=eye(nPeriods);%単位行列
 zero_1=zeros(nPeriods);%零行列
-A1_eye=cat(2,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,one_eye,zero_1,-one_eye,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-A2_eye=cat(2,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-A3_eye=cat(2,zero_1,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A1_eye=cat(2,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,one_eye,zero_1,-one_eye,zero_1,one_eye*bus_out,zero_1,zero_1,-one_eye*bus_out,zero_1,zero_1);
+A2_eye=cat(2,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,one_eye*bus_out,zero_1,zero_1,-one_eye*bus_out,zero_1);
+A3_eye=cat(2,zero_1,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,one_eye*bus_out,zero_1,zero_1,-one_eye*bus_out);
 A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A1_bus_tril=cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1);
+A2_bus_tril=cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1);
+A3_bus_tril=cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril);
 %蓄電池容量制約ver.2（SOCまだ）
 % A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,one_tril,zero_1,-one_tril,zero_1);
 % A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,-one_tril,zero_1,-one_tril,one_tril,zero_1,zero_1);
 % A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,-one_tril,zero_1,-one_tril,one_tril,zero_1);
 %蓄電池EV容量制約
-A_cap=cat(1,A1_tril,A2_tril,A3_tril);
+A_cap=cat(1,A1_tril,A2_tril,A3_tril,A1_bus_tril*bus_out,A2_bus_tril*bus_out,A3_bus_tril*bus_out);
 A_cap=[A_cap;-A_cap;];
 b_l=ones(nPeriods,3).*(initial_capacity);%蓄電池容量下限
 b_h=ones(nPeriods,3).*(battery_capacity_area-initial_capacity);%蓄電池容量上限
-b_cap=[b_l(:);b_h(:);];
+b_bus_l=ones(nPeriods,3).*[200 200 200];%蓄電池容量下限
+b_bus_h=ones(nPeriods,3).*[200 200 200];%蓄電池容量上限
+b_cap=[b_l(:);b_h(:);b_bus_l(:);b_bus_h(:);];
 %需給バランス制約
 A_load=cat(1,A1_eye,A2_eye,A3_eye);
 b_load=need_power(:);%必要電力量（ネットロード）
