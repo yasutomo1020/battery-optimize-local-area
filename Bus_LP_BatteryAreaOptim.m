@@ -183,5 +183,5 @@ fprintf('RMSE\n最適化前：%g\n最適化後：%g\n',string(round(rms(sum(befo
     % hold on
     % plot(pv_out,'r','LineWidth',3)
     
-    heat('充放電状態（LP）',outx,[],'Time [hour]',[1.0 0.0 0.5 0.55],{'\it P_{R}^{disch}','\it P_{C}^{disch}' ,'\it P_{I}^{disch}', '\it P_{R}^{ch}','\it P_{C}^{ch}' ,'\it P_{I}^{ch}','\it P_{RC}^{dist}','\it P_{CI}^{dist}','\it P_{IR}^{dist}','\it P_{CR}^{dist}','\it P_{IC}^{dist}','\it P_{RI}^{dist}','\it z','\it P_{R}^{busdisch}','\it P_{C}^{busdisch}','\it P_{I}^{busdisch}','\it P_{R}^{busch}','\it P_{C}^{busch}','\it P_{I}^{busch}'},[1])
+    heat('充放電状態（LP）',outx,[],'Time [hour]',[1.0 0.0 0.5 0.55],{'\it P_{R}^{disch}','\it P_{C}^{disch}' ,'\it P_{I}^{disch}', '\it P_{R}^{ch}','\it P_{C}^{ch}' ,'\it P_{I}^{ch}','\it P_{RC}^{dist}','\it P_{CI}^{dist}','\it P_{IR}^{dist}','\it P_{CR}^{dist}','\it P_{IC}^{dist}','\it P_{RI}^{dist}','\it z','\it i_{R}^{busdisch}','\it i_{C}^{busdisch}','\it i_{I}^{busdisch}','\it i_{R}^{busch}','\it i_{C}^{busch}','\it i_{I}^{busch}'},[1])
 end
