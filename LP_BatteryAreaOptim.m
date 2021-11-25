@@ -12,7 +12,7 @@ load('const.mat');
 nPeriods=24;%期間数
 nArea=3;%エリア数
 ev_rate=0.5;
-pv_rate=0.5;
+pv_rate=0.85;
 evload_rate=1;
 Area_ev=[2 10 10]*ev_rate;%EV台数
 Area_demand=[500 35 35];%需要家数
@@ -29,7 +29,7 @@ levelling_level=mean(netload);
 %levelling_level=400;
 initial_soc=0.5;%初期SOC
 pws_capacity=Inf;%配電容量 
-b_w=0.00001;%蓄電池排他制約の重み係数
+b_w=0.0001;%蓄電池排他制約の重み係数
 d_w=0.001;%エリア間電力融通(配電損失)排他制約重み係数
 A_w=1;%目的関数設定制約条件の重み係数
 initial_capacity=battery_capacity_area*initial_soc;%初期容量
@@ -154,9 +154,11 @@ if isempty(fval)==0
     end
     result_flow=[ sum(before_flow.').'  sum(after_flow.').'];
     
-fprintf('MAE\n最適化前：%g\n最適化後：%g\n',string(round(mae(before_flow),4)),string(round(mae(after_flow),4)));
-fprintf('RMSE\n最適化前：%g\n最適化後：%g\n',string(round(rms(sum(before_flow.').',sum(levelling_level)),4)),string(round(rms(sum(after_flow.').',sum(levelling_level)),4)));
-    
+fprintf('・MAE\n最適化前：%g\n最適化後：%g\n',string(round(mae(before_flow),4)),string(round(mae(after_flow),4)));
+fprintf('・RMSE\n最適化前：%g\n最適化後：%g\n',string(round(rms(sum(before_flow.').',sum(levelling_level)),4)),string(round(rms(sum(after_flow.').',sum(levelling_level)),4)));
+fprintf('・蓄電池充放電量：%g\n',sum(sum(outx(:,1:6)).'));
+fprintf('・電力融通量：%g\n',sum(sum(outx(:,7:12)).'));
+
     %% figure出力
     save=1;
     %figure_out('plot','ネットロード',netload,[0 25],[-3000 3000],'Time [hour]','netload[kWh]',[1.25 0.0 0.25 0.3],["Residential";"Commercial";"Industrial"],save)
