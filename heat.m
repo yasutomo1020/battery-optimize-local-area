@@ -13,6 +13,12 @@ function [] = heat(figure_name,data,xlabel_name,ylabel_name,pos,xdislab,save)
     %b.FontSize = 20;
     b.YLabel=ylabel_name;
     h=gca;
-    set(h,'fontsize',10);
+    set(h,'fontsize',13);
+        a.OuterPosition=pos*2;
+    img_name=string(figure_name)+'.emf';
+    exportgraphics(a,img_name,'Resolution',500,'ContentType','vector')
+    a.OuterPosition=pos;
+    set(h,'fontsize',12);
+    disp(string(img_name)+'を保存しました。')
 end
 

@@ -32,8 +32,8 @@ pws_capacity=200;%配電容量
 b_w=0.00001;%蓄電池排他制約の重み係数
 d_w=0.001;%エリア間電力融通(配電損失)排他制約重み係数
 A_w=1;%目的関数設定制約条件の重み係数
-bus_out=100;%バスの充放電出力
-bus_cap=300;%バスの容量
+bus_out=250;%バスの充放電出力
+bus_cap=600;%バスの容量
 initial_capacity=battery_capacity_area*initial_soc;%初期容量
 before_flow=demand_data+ev_out*Area_ev.*Area_demand;%EV負荷含む潮流
 
@@ -83,8 +83,8 @@ b_cap=[b_l(:);b_bus_l(:);b_h(:);b_bus_h(:);];
 A_load=cat(1,A1_eye,A2_eye,A3_eye);
 b_load=need_power(:);%必要電力量（ネットロード）
 %目的関数設定制約
-A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1,one_eye,one_eye,one_eye];
-A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1,-one_eye,-one_eye,-one_eye];
+A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye [bus_out*one_eye bus_out*one_eye bus_out*one_eye] -[bus_out*one_eye bus_out*one_eye bus_out*one_eye]];
+A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye -[bus_out*one_eye bus_out*one_eye bus_out*one_eye] [bus_out*one_eye bus_out*one_eye bus_out*one_eye]];
 b_f_1=A_w*sum((netload-levelling_level).').';
 b_f_2=A_w*sum((-netload+levelling_level).').';
 A_f=[A_f_1;A_f_2;];
@@ -158,9 +158,9 @@ if isempty(fval)==0
     
     %% 合計
     out_b=zeros(nPeriods,3);
-    out_b(:,1)=outx(:,1)-outx(:,4)-outx(:,7)+outx(:,9)+outx(:,10)-outx(:,12);
-    out_b(:,2)=outx(:,2)-outx(:,5)+outx(:,7)-outx(:,8)-outx(:,10)+outx(:,11);
-    out_b(:,3)=outx(:,3)-outx(:,6)+outx(:,8)-outx(:,9)-outx(:,11)+outx(:,12);
+    out_b(:,1)=outx(:,1)-outx(:,4)-outx(:,7)+outx(:,9)+outx(:,10)-outx(:,12)+bus_out*(outx(:,14)-outx(:,17));
+    out_b(:,2)=outx(:,2)-outx(:,5)+outx(:,7)-outx(:,8)-outx(:,10)+outx(:,11)+bus_out*(outx(:,15)-outx(:,18));
+    out_b(:,3)=outx(:,3)-outx(:,6)+outx(:,8)-outx(:,9)-outx(:,11)+outx(:,12)+bus_out*(outx(:,16)-outx(:,19));
     after_flow=netload-out_b;
     out_symbol=zeros(nPeriods,6);
     for i=1:3
