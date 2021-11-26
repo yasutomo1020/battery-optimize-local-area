@@ -12,7 +12,7 @@ load('const.mat');
 nPeriods=24;%期間数
 nArea=3;%エリア数
 ev_rate=0.5;
-pv_rate=0.5;
+pv_rate=0.85;
 evload_rate=1;
 Area_ev=[2 10 10]*ev_rate;%EV台数
 Area_demand=[500 35 35];%需要家数
@@ -28,12 +28,12 @@ levelling_level=mean(demand_data);%目標のレベル
 levelling_level=mean(netload);
 %levelling_level=400;
 initial_soc=0.5;%初期SOC
-pws_capacity=Inf;%配電容量 
+pws_capacity=200;%配電容量 
 b_w=0.00001;%蓄電池排他制約の重み係数
 d_w=0.001;%エリア間電力融通(配電損失)排他制約重み係数
 A_w=1;%目的関数設定制約条件の重み係数
 bus_out=100;%バスの充放電出力
-bus_cap=500;%バスの容量
+bus_cap=300;%バスの容量
 initial_capacity=battery_capacity_area*initial_soc;%初期容量
 before_flow=demand_data+ev_out*Area_ev.*Area_demand;%EV負荷含む潮流
 
@@ -83,8 +83,8 @@ b_cap=[b_l(:);b_bus_l(:);b_h(:);b_bus_h(:);];
 A_load=cat(1,A1_eye,A2_eye,A3_eye);
 b_load=need_power(:);%必要電力量（ネットロード）
 %目的関数設定制約
-A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1,zero_1,zero_1,zero_1];
-A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1,zero_1,zero_1,zero_1];
+A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1,one_eye,one_eye,one_eye];
+A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye zero_1 zero_1 zero_1,-one_eye,-one_eye,-one_eye];
 b_f_1=A_w*sum((netload-levelling_level).').';
 b_f_2=A_w*sum((-netload+levelling_level).').';
 A_f=[A_f_1;A_f_2;];
