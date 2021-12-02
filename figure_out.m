@@ -68,7 +68,7 @@ if save==1
     img_name=string(figure_name)+'.emf';
     exportgraphics(a,img_name,'Resolution',500,'ContentType','vector')
     a.OuterPosition=pos;
-    set(h,'fontsize',12);
     disp(string(img_name)+'を保存しました。')
 end
+    set(h,'fontsize',12);
 end
