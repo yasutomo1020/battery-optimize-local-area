@@ -106,21 +106,13 @@ beq=[0;0;0;];
 intcon=(nPeriods*nArea*4+nPeriods):(nPeriods*nArea*4+nPeriods+nPeriods*nArea*2);
 %intcon=[];
 %% 最適化
+%オプション設定
 options =[];
-% options = optimoptions('intlinprog','CutMaxIterations',25);
-%options = optimoptions('intlinprog','CutGeneration','advanced');
-% options = optimoptions('intlinprog','IntegerPreprocess','advanced');
-%options = optimoptions('intlinprog','RootLPAlgorithm','primal-simplex');
-%options = optimoptions('intlinprog','RootLPAlgorithm','dual-simplex');
-% options = optimoptions('intlinprog','HeuristicsMaxNodes',10000);
-% options = optimoptions('intlinprog','Heuristics','advanced');
-%options = optimoptions('intlinprog','BranchRule ',"strongpscost");
-%options = optimoptions('linprog','Algorithm','interior-point');
-tic
-[x,fval,eflag,out] = intlinprog(f,intcon,A,b,Aeq,beq,lb,ub,options);
+%options = optimoptions('intlinprog','Heuristics','advanced','HeuristicsMaxNodes',10000,'RootLPAlgorithm','primal-simplex','CutMaxIterations',25,'CutGeneration','advanced','IntegerPreprocess','advanced');
+tic%計算時間測定
+[x,fval,eflag,out] = intlinprog(f,intcon,A,b,Aeq,beq,lb,ub,options);%最適化
 %[x,fval,eflag,out] = linprog(f,A,b,Aeq,beq,lb,ub,options);
 toc
-% [x,fval,eflag,out] = lsqlin(f,1,A,b,Aeq,beq,lb,ub,options);
 
 %% 解の分解整理
 if isempty(fval)==0
