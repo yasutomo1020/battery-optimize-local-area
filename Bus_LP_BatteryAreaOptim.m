@@ -36,7 +36,10 @@ bus_out=250;%バスの充放電出力
 bus_cap=600;%バスの容量
 initial_capacity=battery_capacity_area*initial_soc;%初期容量
 before_flow=demand_data_sum+ev_out*Area_ev.*Area_demand_num;%EV負荷含む潮流（最適化無しの潮流を計算）
-
+bus_route_1=[1 1 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0;].';
+bus_route_2=[0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 0 0 0;].';
+bus_route_3=[0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0;].';
+bus_route=[bus_route_1;bus_route_2;bus_route_3;];
 %% 解の上下限設定
 battery_out=battery_out_1*(Area_ev.*Area_demand_num);%最大蓄電池出力合計
 lb=[zeros(nPeriods,6) zeros(nPeriods,6)];%蓄電池入出力と電力融通量の下限
@@ -103,8 +106,8 @@ beq=[0;0;0;];
 
 %% 整数制約
 %EVバス用変数のみ0or1
-intcon=(nPeriods*nArea*4+nPeriods):(nPeriods*nArea*4+nPeriods+nPeriods*nArea*2);
-%intcon=[];
+%intcon=(nPeriods*nArea*4+nPeriods):(nPeriods*nArea*4+nPeriods+nPeriods*nArea*2);
+intcon=[];
 %% 最適化
 %オプション設定
 options =[];
