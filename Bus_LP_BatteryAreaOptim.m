@@ -8,7 +8,7 @@ disp(DateString)
 close all;
 load('const.mat');
 
-%% 定数変数定義、検討条件
+%% 定数変数定義、検討条件(電力はkW、容量はkWh)
 nPeriods=24;%期間数
 nArea=3;%エリア数
 ev_rate=0.5;%EV導入率
@@ -28,13 +28,14 @@ need_power=netload;%ネットロードを目標値にセット
 levelling_level=mean(netload);%平準化レベル
 %levelling_level=400;
 initial_soc=0.5;%初期SOC
+initial_capacity=battery_capacity_area*initial_soc;%初期容量
 pws_capacity=200;%配電線容量
 b_w=0.00001;%蓄電池排他制約の重み係数
 d_w=0.001;%エリア間電力融通(配電損失)排他制約重み係数
 A_w=1;%目的関数設定制約条件の重み係数
-bus_out=250;%バスの充放電出力
-bus_cap=600;%バスの容量
-initial_capacity=battery_capacity_area*initial_soc;%初期容量
+bus_out=50;%バスの充放電出力
+bus_cap=105.6;%バスの容量
+
 before_flow=demand_data_sum+ev_out*Area_ev.*Area_demand_num;%EV負荷含む潮流（最適化無しの潮流を計算）
 bus_route_1=[1 1 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0;].';
 bus_route_2=[0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 0 0 0;].';
@@ -43,9 +44,9 @@ bus_route=[bus_route_1;bus_route_2;bus_route_3;];
 %% 解の上下限設定
 battery_out=battery_out_1*(Area_ev.*Area_demand_num);%最大蓄電池出力合計
 lb=[zeros(nPeriods,6) zeros(nPeriods,6)];%蓄電池入出力と電力融通量の下限
-lb=[lb(:);-Inf*ones(nPeriods,1);-Inf*ones(nPeriods*nArea,1)];%z変数とEVバス変数の下限
+lb=[lb(:);-Inf*ones(nPeriods,1);-bus_out*bus_route];%z変数とEVバス変数の下限
 ub=[ones(nPeriods,6).*[battery_out battery_out] pws_capacity*ones(nPeriods,6)];%蓄電池入出力と電力融通量の上限
-ub=[ub(:);Inf*ones(nPeriods,1);Inf*ones(nPeriods*nArea,1)];%z変数とEVバス変数の上限
+ub=[ub(:);Inf*ones(nPeriods,1);bus_out*bus_route];%z変数とEVバス変数の上限
 % lb=[];
 % ub=[];
 
@@ -53,7 +54,7 @@ ub=[ub(:);Inf*ones(nPeriods,1);Inf*ones(nPeriods*nArea,1)];%z変数とEVバス�
 f=b_w*ones(nPeriods,nArea*2);%蓄電池入出力変数設定、排他制約の係数設定
 f=[f;d_w*ones(nPeriods,factorial(nArea));].';%エリア間電力融通変数設定、排他制約の係数設定
 f=[f(:);ones(nPeriods,1)];%変数z設定
-f=[f;bus_route(:)];%EVバス変数設定
+f=[f;zeros(nPeriods*nArea,1)];%EVバス変数設定
 
 %% 不等式制約
 one_tril=tril(ones(nPeriods));%下三角行列作成
@@ -66,7 +67,7 @@ A3_eye=cat(2,zero_1,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_ey
 A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-A_bus_tril=bus_out*cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_tril,one_tril,one_tril);
+A_bus_tril=cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_tril,one_tril,one_tril);
 %容量制約設定
 A_cap=cat(1,A1_tril,A2_tril,A3_tril,A_bus_tril);
 A_cap=[A_cap;-A_cap;];
@@ -132,6 +133,8 @@ if isempty(fval)==0
     %% 容量（SOC）計算
     socx=zeros(nPeriods+1,3);
     socx(1,:)=initial_capacity;
+    bus_socx=zeros(nPeriods+1,1);
+    bus_socx(1,1)=bus_cap/2;
     for h=1:nPeriods
         %     socx(h+1,1)=socx(h,1)-outx(h,1)+outx(h,4)-outx(h,7)-outx(h,12);
         %     socx(h+1,2)=socx(h,2)-outx(h,2)+outx(h,5)-outx(h,8)-outx(h,10);
@@ -139,9 +142,10 @@ if isempty(fval)==0
         socx(h+1,1)=socx(h,1)-outx(h,1)+outx(h,4);
         socx(h+1,2)=socx(h,2)-outx(h,2)+outx(h,5);
         socx(h+1,3)=socx(h,3)-outx(h,3)+outx(h,6);
+        bus_socx(h+1,1)=bus_socx(h,1)-outx(h,14)-outx(h,15)-outx(h,16);
     end
     socx=round(socx,4)./battery_capacity_area;
-    
+    bus_socx=round(bus_socx,4)./bus_cap;
     %% 合計
     out_b=zeros(nPeriods,3);
     out_b(:,1)=outx(:,1)-outx(:,4)-outx(:,7)+outx(:,9)+outx(:,10)-outx(:,12)+outx(:,14);
@@ -161,8 +165,9 @@ if isempty(fval)==0
     %% figure出力
     save=0;%1なら保存、0なら保存しない（保存に時間がかかるため）
     figure_out('plot','SOC推移（LP）',socx,[1 25],[0 1],'Time [hour]','State Of Charge',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],[],save)
+    figure_out('plot','バスSOC推移（LP）',bus_socx,[1 25],[0 1],'Time [hour]','Bus State Of Charge',[1.5 0.55 0.25 0.4],[],[],save)
     %figure_out('bar','最適化前flow',before_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.25 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     %figure_out('bar','最適化後flow',after_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.0 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     figure_out('plot','最適化結果（LP）',result_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kW]',[1.0 0.55 0.25 0.4],["最適化前","最適化後"],{'#FFE13C','#FFB400'},save)
-    heat('充放電状態（LP）',outx,[],'Time [hour]',[1.0 0.0 0.5 0.55],{'\it P_{R}^{disch}','\it P_{C}^{disch}' ,'\it P_{I}^{disch}', '\it P_{R}^{ch}','\it P_{C}^{ch}' ,'\it P_{I}^{ch}','\it P_{RC}^{dist}','\it P_{CI}^{dist}','\it P_{IR}^{dist}','\it P_{CR}^{dist}','\it P_{IC}^{dist}','\it P_{RI}^{dist}','\it z','\it i_{R}^{busdisch}','\it i_{C}^{busdisch}','\it i_{I}^{busdisch}','\it i_{R}^{busch}','\it i_{C}^{busch}','\it i_{I}^{busch}'},save)
+    heat('充放電状態（LP）',outx,[],'Time [hour]',[1.0 0.0 0.5 0.55],{'\it P_{R}^{disch}','\it P_{C}^{disch}' ,'\it P_{I}^{disch}', '\it P_{R}^{ch}','\it P_{C}^{ch}' ,'\it P_{I}^{ch}','\it P_{RC}^{dist}','\it P_{CI}^{dist}','\it P_{IR}^{dist}','\it P_{CR}^{dist}','\it P_{IC}^{dist}','\it P_{RI}^{dist}','\it z','\it i_{R}^{power}','\it i_{C}^{power}','\it i_{I}^{power}'},save)
 end
