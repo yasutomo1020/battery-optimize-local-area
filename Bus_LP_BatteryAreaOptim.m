@@ -43,9 +43,9 @@ bus_route=[bus_route_1;bus_route_2;bus_route_3;];
 %% 解の上下限設定
 battery_out=battery_out_1*(Area_ev.*Area_demand_num);%最大蓄電池出力合計
 lb=[zeros(nPeriods,6) zeros(nPeriods,6)];%蓄電池入出力と電力融通量の下限
-lb=[lb(:);-Inf*ones(nPeriods,1);zeros(nPeriods*nArea*2,1)];%z変数とEVバス変数の下限
+lb=[lb(:);-Inf*ones(nPeriods,1);-Inf*ones(nPeriods*nArea,1)];%z変数とEVバス変数の下限
 ub=[ones(nPeriods,6).*[battery_out battery_out] pws_capacity*ones(nPeriods,6)];%蓄電池入出力と電力融通量の上限
-ub=[ub(:);Inf*ones(nPeriods,1);ones(nPeriods*nArea*2,1)];%z変数とEVバス変数の上限
+ub=[ub(:);Inf*ones(nPeriods,1);Inf*ones(nPeriods*nArea,1)];%z変数とEVバス変数の上限
 % lb=[];
 % ub=[];
 
@@ -53,20 +53,20 @@ ub=[ub(:);Inf*ones(nPeriods,1);ones(nPeriods*nArea*2,1)];%z変数とEVバス変�
 f=b_w*ones(nPeriods,nArea*2);%蓄電池入出力変数設定、排他制約の係数設定
 f=[f;d_w*ones(nPeriods,factorial(nArea));].';%エリア間電力融通変数設定、排他制約の係数設定
 f=[f(:);ones(nPeriods,1)];%変数z設定
-f=[f;zeros(nPeriods*nArea*2,1)];%EVバス変数設定
+f=[f;bus_route(:)];%EVバス変数設定
 
 %% 不等式制約
 one_tril=tril(ones(nPeriods));%下三角行列作成
 one_eye=eye(nPeriods);%単位行列作成
 zero_1=zeros(nPeriods);%零行列作成
 %制約条件用の行列作成
-A1_eye=cat(2,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,one_eye,zero_1,-one_eye,zero_1,one_eye*bus_out,zero_1,zero_1,-one_eye*bus_out,zero_1,zero_1);
-A2_eye=cat(2,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,one_eye*bus_out,zero_1,zero_1,-one_eye*bus_out,zero_1);
-A3_eye=cat(2,zero_1,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,one_eye*bus_out,zero_1,zero_1,-one_eye*bus_out);
-A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-A_bus_tril=bus_out*cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_tril,one_tril,one_tril,-one_tril,-one_tril,-one_tril);
+A1_eye=cat(2,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,one_eye,zero_1,-one_eye,zero_1,one_eye,zero_1,zero_1);
+A2_eye=cat(2,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,one_eye,zero_1);
+A3_eye=cat(2,zero_1,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1,zero_1,one_eye);
+A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+A_bus_tril=bus_out*cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_tril,one_tril,one_tril);
 %容量制約設定
 A_cap=cat(1,A1_tril,A2_tril,A3_tril,A_bus_tril);
 A_cap=[A_cap;-A_cap;];
@@ -79,26 +79,28 @@ b_cap=[b_l(:);b_bus_l(:);b_h(:);b_bus_h(:);];
 A_load=cat(1,A1_eye,A2_eye,A3_eye);
 b_load=need_power(:);%必要電力量（ネットロード）
 %目的関数設定制約
-A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye [bus_out*one_eye bus_out*one_eye bus_out*one_eye] -[bus_out*one_eye bus_out*one_eye bus_out*one_eye]];
-A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye -[bus_out*one_eye bus_out*one_eye bus_out*one_eye] [bus_out*one_eye bus_out*one_eye bus_out*one_eye]];
+A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye [one_eye one_eye one_eye]];
+A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye -[one_eye one_eye one_eye]];
 b_f_1=A_w*sum((netload-levelling_level).').';
 b_f_2=A_w*sum((-netload+levelling_level).').';
 A_f=[A_f_1;A_f_2;];
 b_f=[b_f_1;b_f_2;];
 %バス存在制約(各時刻で複数存在しないように、6時～21時)
-A_bus=cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_eye,one_eye,one_eye,one_eye,one_eye,one_eye);
-b_bus=[ones(nPeriods-8,1);zeros(8,1)];
+% A_bus=cat(2,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,one_eye,one_eye,one_eye,one_eye,one_eye,one_eye);
+% b_bus=[ones(nPeriods-8,1);zeros(8,1)];
 %制約条件まとめ
 sw_c=1;%切り替え用変数
 sw_l=1;%切り替え用変数
-A=[sw_c*A_cap;sw_l*A_load;A_f;A_bus];
-b=[sw_c*b_cap;sw_l*b_load;b_f;b_bus];
-%A=[];b=[];s
+% A=[sw_c*A_cap;sw_l*A_load;A_f;A_bus];
+% b=[sw_c*b_cap;sw_l*b_load;b_f;b_bus];
+A=[sw_c*A_cap;sw_l*A_load;A_f;];
+b=[sw_c*b_cap;sw_l*b_load;b_f;];
+%A=[];b=[];
 
 %% 等式制約
-Aeq1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-Aeq2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
-Aeq3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+Aeq1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+Aeq2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+Aeq3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 %初期充電量制約（最初と最後を比較して蓄電池残量変化なし）
 Aeq=[Aeq1_tril(24,:);Aeq2_tril(24,:);Aeq3_tril(24,:);];
 beq=[0;0;0;];
@@ -142,9 +144,9 @@ if isempty(fval)==0
     
     %% 合計
     out_b=zeros(nPeriods,3);
-    out_b(:,1)=outx(:,1)-outx(:,4)-outx(:,7)+outx(:,9)+outx(:,10)-outx(:,12)+bus_out*(outx(:,14)-outx(:,17));
-    out_b(:,2)=outx(:,2)-outx(:,5)+outx(:,7)-outx(:,8)-outx(:,10)+outx(:,11)+bus_out*(outx(:,15)-outx(:,18));
-    out_b(:,3)=outx(:,3)-outx(:,6)+outx(:,8)-outx(:,9)-outx(:,11)+outx(:,12)+bus_out*(outx(:,16)-outx(:,19));
+    out_b(:,1)=outx(:,1)-outx(:,4)-outx(:,7)+outx(:,9)+outx(:,10)-outx(:,12)+outx(:,14);
+    out_b(:,2)=outx(:,2)-outx(:,5)+outx(:,7)-outx(:,8)-outx(:,10)+outx(:,11)+outx(:,15);
+    out_b(:,3)=outx(:,3)-outx(:,6)+outx(:,8)-outx(:,9)-outx(:,11)+outx(:,12)+outx(:,16);
     after_flow=netload-out_b;
     out_symbol=zeros(nPeriods,6);
     for i=1:3
