@@ -35,11 +35,13 @@ d_w=0.001;%エリア間電力融通(配電損失)排他制約重み係数
 A_w=1;%目的関数設定制約条件の重み係数
 bus_out=50;%バスの充放電出力
 bus_cap=105.6;%バスの容量
+initial_bus_soc=0.9;%バス初期SOC
+initial_bus_capacity=bus_cap*initial_bus_soc;%バス初期容量
 
 before_flow=demand_data_sum+ev_out*Area_ev.*Area_demand_num;%EV負荷含む潮流（最適化無しの潮流を計算）
-bus_route_1=[1 1 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0;].';
-bus_route_2=[0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 0 0 0;].';
-bus_route_3=[0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0;].';
+bus_route_1=[1 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0;].';
+bus_route_2=[0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0;].';
+bus_route_3=[0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0;].';
 bus_route=[bus_route_1;bus_route_2;bus_route_3;];
 %% 解の上下限設定
 battery_out=battery_out_1*(Area_ev.*Area_demand_num);%最大蓄電池出力合計
@@ -73,8 +75,8 @@ A_cap=cat(1,A1_tril,A2_tril,A3_tril,A_bus_tril);
 A_cap=[A_cap;-A_cap;];
 b_l=ones(nPeriods,3).*(initial_capacity);%蓄電池容量下限
 b_h=ones(nPeriods,3).*(battery_capacity_area-initial_capacity);%蓄電池容量上限
-b_bus_l=ones(nPeriods,1).*bus_cap/2;%バス用蓄電池容量下限
-b_bus_h=ones(nPeriods,1).*bus_cap/2;%バス用蓄電池容量上限
+b_bus_l=ones(nPeriods,1).*(initial_bus_capacity);%バス用蓄電池容量下限
+b_bus_h=ones(nPeriods,1).*(bus_cap-initial_bus_capacity);%バス用蓄電池容量上限
 b_cap=[b_l(:);b_bus_l(:);b_h(:);b_bus_h(:);];
 %需給バランス制約
 A_load=cat(1,A1_eye,A2_eye,A3_eye);
@@ -134,7 +136,7 @@ if isempty(fval)==0
     socx=zeros(nPeriods+1,3);
     socx(1,:)=initial_capacity;
     bus_socx=zeros(nPeriods+1,1);
-    bus_socx(1,1)=bus_cap/2;
+    bus_socx(1,1)=initial_bus_capacity;
     for h=1:nPeriods
         %     socx(h+1,1)=socx(h,1)-outx(h,1)+outx(h,4)-outx(h,7)-outx(h,12);
         %     socx(h+1,2)=socx(h,2)-outx(h,2)+outx(h,5)-outx(h,8)-outx(h,10);
