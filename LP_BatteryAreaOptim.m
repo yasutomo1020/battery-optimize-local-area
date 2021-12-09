@@ -19,7 +19,7 @@ Area_demand=[500 35 35];%需要家数
 battery_capacity=12;
 battery_capacity_area=battery_capacity*(Area_ev.*Area_demand);%バッテリー容量
 demand_data=demand_data.*Area_demand;%需要合計
-pv_out=circshift(pv_225_su_max,19)/225;%PV容量1kwのカーブ
+pv_out=circshift(pv_out_1kw,19);%今庄エリアで片面受光型傾斜角30°PV容量1kwのカーブ、６時からに変更
 pv_capacity=4.1;%基準PV容量
 pv_out=pv_capacity*[1 2.1301 2.1988].*pv_out*pv_rate;%住宅を１として、屋根面積比で計算
 netload=demand_data+ev_out*evload_rate*Area_ev.*Area_demand-pv_out.*Area_demand;%ネットロード計算
@@ -160,15 +160,11 @@ fprintf('・蓄電池充放電量：%g\n',sum(sum(outx(:,1:6)).'));
 fprintf('・電力融通量：%g\n',sum(sum(outx(:,7:12)).'));
 
     %% figure出力
-    save=1;
+    save=0;
     %figure_out('plot','ネットロード',netload,[0 25],[-3000 3000],'Time [hour]','netload[kWh]',[1.25 0.0 0.25 0.3],["Residential";"Commercial";"Industrial"],save)
     figure_out('plot','SOC推移（LP）',socx,[1 25],[0 1],'Time [hour]','State Of Charge',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],[],save)
     %figure_out('bar','最適化前flow',before_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.25 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     %figure_out('bar','最適化後flow',after_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.0 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     figure_out('plot','最適化結果（LP）',result_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kW]',[1.0 0.55 0.25 0.4],["最適化前","最適化後"],{'#FFE13C','#FFB400'},save)
-    % yyaxis right 
-    % hold on
-    % plot(pv_out,'r','LineWidth',3)
-    
-    figure_out('heatmap','充放電状態（LP）',outx,[],[],[],'Time [hour]',[1.0 0.0 0.5 0.55],[],[],[1])
+    figure_out('heatmap','充放電状態（LP）',outx,[],[],[],'Time [hour]',[1.0 0.0 0.5 0.55],[],[],save)
 end
