@@ -1,7 +1,7 @@
+# python3.9.9,windows10,VScode推奨(2021年12月9日)
 import math
 import os
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 import datetime as dt
@@ -178,6 +178,7 @@ def Power2(N, Na, a, theta_a, dn):
 
 
 ###############################################################################################################
+
 # ##====installation==================================================================
 # データはMETPVの平均年から(https://appww2.infoc.nedo.go.jp/appww/index.html)
 hoge = [0, 0, 0, 0, 0, 0, 0]
@@ -230,23 +231,13 @@ theta_a_bs = Tilt_angle  # Tilt_angl = 0(傾き)
 N_bs = N_panel
 hoge[6] = 1  # 両面受光南北設置の時の判別(hoge =[0,0,0,0,1])
 
-# =====================================================================================
-
-# ##=================place============================================================
-# #naha ==============================================================
-# phi = 26.207 # latitude
-# lamda = 127.685 # longitude
-# # 1990~2009_csv_data(NAHA) -> list H,Hb,Hd ===================
-# H_data  = pd.read_csv('./H/H.csv', names = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24])
-# # H_data = list(H_data.as_matrix().tolist())                                    #as_matrix()はpython3.7から非推奨#.valueに置き換える
-# H_data = list(H_data.values.tolist())
-
-# #fukui =============================================================
-# phi = 36.033 # latitude
-phi = 36.05833
-# lamda = 136.133 # longitude
-lamda = 136.225
-# 1990~2009_csv_data(fukui) -> list H,Hb,Hd ==================
+# imajyo =============================================================
+# 緯度と経度
+# latitude
+phi = 35.46
+# longitude
+lamda = 136.12
+# 1990~2009_csv_data -> list H,Hb,Hd ==================
 # csvファイル読み込み
 filename = (os.getcwd()+"/pv_create/H_imajyo.csv").replace('/', os.sep)
 H_data = pd.read_csv(filename, names=[
