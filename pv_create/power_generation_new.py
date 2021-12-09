@@ -179,55 +179,52 @@ def Power2(N, Na, a, theta_a, dn):
 ###############################################################################################################
 # ##====installation==================================================================
 hoge = [0, 0, 0, 0, 0, 0, 0]
-
+N_panel = 1  # パネルの枚数
 # #====片面受光================================================
 # #====south=====================
 a_s = 180  # Azimuth(方位角)
 theta_a_s = 24  # Tilt_angl = 0(傾き)
-N_s = 40  # 過積載100%枚数40枚
+N_s = N_panel  # 過積載100%枚数40枚
 Na_s = N_s
 hoge[0] = 1  # 真南設置の時の判別(hoge=[1,0,0,0,0])
 
 # #====west=====================
 a_w = 270  # Azimuth(方位角)
 theta_a_w = 24  # Tilt_angl = 0(傾き)
-N_w = 40  # 過積載100%枚数40枚
+N_w = N_panel  # 過積載100%枚数40枚
 Na_w = N_w
 hoge[1] = 1  # 西側設置の時の判別(hoge=[0,1,0,0,0])
 
 # #====south_west=====================
 a_sw = 225  # Azimuth(方位角)
 theta_a_sw = 24  # Tilt_angl = 0(傾き)
-N_sw = 40  # 過積載100%枚数40枚
+N_sw = N_panel  # 過積載100%枚数40枚
 Na_sw = N_sw
 hoge[2] = 1  # 南西設置の時の判別(hoge=[0,0,1,0,0])
 
 # #====east=====================
 a_e = 90  # Azimuth(方位角)
 theta_a_e = 24  # Tilt_angl = 0(傾き)
-N_e = 40  # 過積載100%枚数40枚
+N_e = N_panel  # 過積載100%枚数40枚
 Na_e = N_e
 hoge[3] = 1  # 西側設置の時の判別(hoge=[0,1,0,0,0])
 
 # #====south_east=====================
 a_se = 135  # Azimuth(方位角)
 theta_a_se = 24  # Tilt_angl = 0(傾き)
-N_se = 40  # 過積載100%枚数40枚
-Na_se = N_se
+N_se = N_panel  # 過積載100%枚数40枚
 hoge[4] = 1  # 南西設置の時の判別(hoge=[0,0,1,0,0])
 
 # #====両面受光_bifacial(both_side_light_reception_photovoltaics)(仮)東西設置==========
 a_be = 90  # Azimuth(方位角)
 theta_a_be = 90  # Tilt_angl = 0(傾き)
-N_be = 40
-Na_be = N_be
+N_be = N_panel
 hoge[5] = 1  # 両面受光東西設置の時の判別(hoge =[0,0,0,1,0])
 
 # #====両面受光_bifacial(both_side_light_reception_photovoltaics)(仮)南北設置==========
 a_bs = 180  # Azimuth(方位角)
 theta_a_bs = 24  # Tilt_angl = 0(傾き)
-N_bs = 40
-Na_bs = N_bs
+N_bs = N_panel
 hoge[6] = 1  # 両面受光南北設置の時の判別(hoge =[0,0,0,0,1])
 
 # =====================================================================================
@@ -247,14 +244,14 @@ phi = 36.05833
 # lamda = 136.133 # longitude
 lamda = 136.225
 # 1990~2009_csv_data(fukui) -> list H,Hb,Hd ==================
-H_data = pd.read_csv('sado_pv/H/H_fukui.csv', names=[
+H_data = pd.read_csv('pv_create/H/H_imajyo.csv', names=[
                      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
 # H_data = list(H_data.as_matrix().tolist())
 H_data = list(H_data.values.tolist())
 
 # #====date====================================================================
 # 一番日射量が多い日(年は閏年ではない年にする)
-date_fine = dt.date(2019, 7, 7)
+date_fine = dt.date(2019, 6, 2)
 # 一番変動が多い日
 date_fluctuation = dt.date(2019, 1, 19)
 # 一番変動が少ない日
@@ -295,6 +292,7 @@ Hd = [[col * 0.01 * 10 ** 6 / 3600 for col in row] for row in Hd]
 
 
 # parameters ===========================================================================
+# 1枚あたりの設備容量：225W
 p = 0.2  # albedo
 omega = 2 * math.pi / 365
 # Np = 20
@@ -412,7 +410,7 @@ hour = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_xlim(0, 23)
-ax.set_ylim(0, 10000)
+ax.set_ylim(0, 225)
 plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
            14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
 font = {'family': 'IPAexGothic'}
@@ -425,7 +423,7 @@ plt.plot(hour, Wpv_be_fi, color='Green', label=r"両面受光 東西設置 N=40"
 plt.plot(hour, Wpv_bs_fi, color='orange', label=r"両面受光 南北設置 N=40")
 plt.xlabel(r"時間 [h]", fontsize=10)
 plt.ylabel(r"電力量[W]", fontsize=10)
-plt.title('快晴日(7/7)の各時間当たりの発電量')
+plt.title('快晴日('+date_fine.strftime('%m/%d')+')の各時間当たりの発電量')
 plt.legend(fontsize=10)
 plt.grid()
 # ===================================================================
@@ -434,7 +432,7 @@ plt.grid()
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_xlim(0, 23)
-ax.set_ylim(0, 10000)
+ax.set_ylim(0, 225)
 plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
            14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
 font = {'family': 'IPAexGothic'}
@@ -447,7 +445,7 @@ plt.plot(hour, Wpv_be_fl, color='Green', label=r"両面受光 東西設置 N=40"
 plt.plot(hour, Wpv_bs_fl, color='orange', label=r"両面受光 南北設置 N=40")
 plt.xlabel(r"時間 [h]", fontsize=10)
 plt.ylabel(r"電力量[W]", fontsize=10)
-plt.title('変動の多い日(8/4)の各時間当たりの発電量')
+plt.title('変動の多い日('+date_fluctuation.strftime('%m/%d')+')の各時間当たりの発電量')
 plt.legend(fontsize=10)
 plt.grid()
 # ===================================================================
@@ -456,7 +454,7 @@ plt.grid()
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_xlim(0, 23)
-ax.set_ylim(0, 10000)
+ax.set_ylim(0, 225)
 plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
            14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
 #font = {'family': 'IPAexGothic'}
@@ -469,7 +467,7 @@ plt.plot(hour, Wpv_be_cl, color='Green', label=r"両面受光 東西設置 N=40"
 plt.plot(hour, Wpv_bs_cl, color='orange', label=r"両面受光 南北設置 N=40")
 plt.xlabel(r"時間 [h]", fontsize=10)
 plt.ylabel(r"電力量[W]", fontsize=10)
-plt.title('変動の少ない日(1/8)の各時間当たりの発電量')
+plt.title('変動の少ない日('+date_cloudy.strftime('%m/%d')+')の各時間当たりの発電量')
 plt.legend(fontsize=10)
 plt.grid()
 # ===================================================================
