@@ -1,4 +1,5 @@
 import math
+import os
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -178,9 +179,10 @@ def Power2(N, Na, a, theta_a, dn):
 
 ###############################################################################################################
 # ##====installation==================================================================
+# データはMETPVの平均年から(https://appww2.infoc.nedo.go.jp/appww/index.html)
 hoge = [0, 0, 0, 0, 0, 0, 0]
 N_panel = 1  # パネルの枚数
-Tilt_angle = 24
+Tilt_angle = 30
 # #====片面受光================================================
 # #====south=====================
 a_s = 180  # Azimuth(方位角)
@@ -245,7 +247,9 @@ phi = 36.05833
 # lamda = 136.133 # longitude
 lamda = 136.225
 # 1990~2009_csv_data(fukui) -> list H,Hb,Hd ==================
-H_data = pd.read_csv('pv_create/H/H_imajyo.csv', names=[
+# csvファイル読み込み
+filename = (os.getcwd()+"/pv_create/H_imajyo.csv").replace('/', os.sep)
+H_data = pd.read_csv(filename, names=[
                      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
 # H_data = list(H_data.as_matrix().tolist())
 H_data = list(H_data.values.tolist())
@@ -424,7 +428,7 @@ plt.plot(hour, Wpv_be_fi, color='Green', label=r"両面受光 東西設置")
 plt.plot(hour, Wpv_bs_fi, color='orange', label=r"両面受光 南北設置")
 plt.xlabel(r"時間 [h]", fontsize=10)
 plt.ylabel(r"電力量[Wh]", fontsize=10)
-plt.title(date_fine.strftime('%m月%d日')+'の各時間当たりの発電量')
+plt.title(date_fine.strftime('%m月%d日')+'の各時間当たりの発電量(傾斜角:'+str(Tilt_angle)+'°)')
 plt.legend(fontsize=10)
 plt.grid()
 # ===================================================================
