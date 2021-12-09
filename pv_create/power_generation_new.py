@@ -407,7 +407,10 @@ if hoge[6] == 1:
     Wpv_bs_cl = Power2(N_bs, N_bs, a_bs, theta_a_bs, dn_cl)
     Wpv_bs_cl = copy.deepcopy(Wpv_bs_cl)
 
-
+# CSVファイルで結果保存
+data = pd.DataFrame(Wpv_s_fi)
+data.to_csv("pv_create/pv_result.csv",
+            encoding="shift_jis", header=False, index=False)
 # =====================graf===================================================
 # ======快晴日===================================================
 hour = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
