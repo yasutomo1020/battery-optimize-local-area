@@ -12,7 +12,7 @@ load('const.mat');
 nPeriods=24;%期間数
 nArea=3;%エリア数
 ev_rate=0.5;
-pv_rate=0.85;
+pv_rate=1;%限界：0.9662(融通なし)1.826（融通あり）
 evload_rate=1;
 Area_ev=[2 10 10]*ev_rate;%EV台数
 Area_demand=[500 35 35];%需要家数
@@ -28,9 +28,10 @@ need_power=netload;
 levelling_level=mean(netload);
 %levelling_level=400;
 initial_soc=0.5;%初期SOC
-pws_capacity=Inf;%配電容量 
+pws_capacity=10000;%配電線容量(10MW)
 b_w=0.0001;%蓄電池排他制約の重み係数
-d_w=0.001;%エリア間電力融通(配電損失)排他制約重み係数
+d_w=0.0001;%エリア間電力融通(配電損失)排他制約重み係数
+%b_w=0;d_w=0;
 A_w=1;%目的関数設定制約条件の重み係数
 initial_capacity=battery_capacity_area*initial_soc;%初期容量
 before_flow=demand_data+ev_out*Area_ev.*Area_demand;%EV負荷含む潮流
@@ -103,7 +104,7 @@ intcon=[];
 %% 最適化
 options =[];
 % options = optimoptions('intlinprog','CutMaxIterations',25);
- %options = optimoptions('intlinprog','CutGeneration','advanced');
+%options = optimoptions('intlinprog','CutGeneration','advanced');
 % options = optimoptions('intlinprog','IntegerPreprocess','advanced');
 %options = optimoptions('intlinprog','RootLPAlgorithm','primal-simplex');
 %options = optimoptions('intlinprog','RootLPAlgorithm','dual-simplex');
@@ -154,17 +155,20 @@ if isempty(fval)==0
     end
     result_flow=[ sum(before_flow.').'  sum(after_flow.').'];
     
-fprintf('・MAE\n最適化前：%g\n最適化後：%g\n',string(round(mae(before_flow),4)),string(round(mae(after_flow),4)));
-fprintf('・RMSE\n最適化前：%g\n最適化後：%g\n',string(round(rms(sum(before_flow.').',sum(levelling_level)),4)),string(round(rms(sum(after_flow.').',sum(levelling_level)),4)));
-fprintf('・蓄電池充放電量：%g\n',sum(sum(outx(:,1:6)).'));
-fprintf('・電力融通量：%g\n',sum(sum(outx(:,7:12)).'));
-
+    fprintf('・MAE\n最適化前：%g\n最適化後：%g\n',string(round(mae(before_flow),4)),string(round(mae(after_flow),4)));
+    fprintf('・RMSE\n最適化前：%g\n最適化後：%g\n',string(round(rms(sum(before_flow.').',sum(levelling_level)),4)),string(round(rms(sum(after_flow.').',sum(levelling_level)),4)));
+    fprintf('・蓄電池充放電量：%g\n',sum(sum(outx(:,1:6)).'));
+    fprintf('・電力融通量：%g\n',sum(sum(outx(:,7:12)).'));
+    
     %% figure出力
-    save=0;
+    save=1;
     %figure_out('plot','ネットロード',netload,[0 25],[-3000 3000],'Time [hour]','netload[kWh]',[1.25 0.0 0.25 0.3],["Residential";"Commercial";"Industrial"],save)
     figure_out('plot','SOC推移（LP）',socx,[1 25],[0 1],'Time [hour]','State Of Charge',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],[],save)
     %figure_out('bar','最適化前flow',before_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.25 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     %figure_out('bar','最適化後flow',after_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.0 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
-    figure_out('plot','最適化結果（LP）',result_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kW]',[1.0 0.55 0.25 0.4],["最適化前","最適化後"],{'#FFE13C','#FFB400'},save)
+    figure_out('plot','最適化結果（LP）',result_flow,[0 25],[0 3000],'Time [hour]','配電用変電所からの潮流[kW]',[1.0 0.55 0.25 0.4],["最適化前","最適化後"],{'#FFE13C','#FFB400'},save)
     figure_out('heatmap','充放電状態（LP）',outx,[],[],[],'Time [hour]',[1.0 0.0 0.5 0.55],[],[],save)
+    figure_out('plot_big','充放電状態プロット',outx(:,1:6),[0 25],[0 1000],'Time [hour]','電力量[kW]',[1.5 0.5 0.5 0.45],["蓄電池放電量（住宅）","蓄電池放電量（商業）","蓄電池放電量（工業）","蓄電池充電量（住宅）","蓄電池充電量（商業）","蓄電池充電量（工業）"],[],save)
+   figure_out('plot_big','電力融通状態プロット',outx(:,7:12),[0 25],[0 1000],'Time [hour]','電力量[kW]',[1.5 0 0.5 0.45],["エリア間電力融通（住宅→商業）","エリア間電力融通（商業→工業）","エリア間電力融通（工業→住宅）","エリア間電力融通（商業→住宅）","エリア間電力融通（工業→商業）","エリア間電力融通（住宅→工業）"],[],save)
+
 end
