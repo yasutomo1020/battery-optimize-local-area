@@ -47,10 +47,10 @@ elseif type == "plot"
         legend(les)
         legend('boxoff')
     end
-            pbaspect([1.5 1 1]);
+    pbaspect([1.5 1 1]);
 elseif type == "plot_big"
     a=figure('Name',num2str(figure_name),'ToolBar','none','NumberTitle','on','Units','normalized','OuterPosition',pos);
-    plot(data,'LineWidth',3) ; hold on
+    bar(data,0.5,'stacked') ; hold on
     if isempty(color)==0
         colororder(color)
     end
@@ -70,11 +70,12 @@ elseif type == "plot_big"
         % legend(les,'Location','southwest')
         led=legend(les);
         led.NumColumns = 2;
-       % led.FontSize=18;
+        led.Location='northeast';
+        led.FontSize=20;
         legend('boxoff')
     end
-        set(h,'fontsize',24);
-            pbaspect([1.5 1 1]);
+    set(h,'fontsize',20);
+    pbaspect([1.5 1 1]);
 elseif type == "heatmap"
     a=figure('Name',num2str(figure_name),'ToolBar','none','NumberTitle','on','Units','normalized','OuterPosition',pos);
     b=heatmap(data,'xlabel',xlabel_name,'ylabel',ylabel_name) ;
@@ -88,7 +89,7 @@ elseif type == "heatmap"
     b.YLabel=ylabel_name;
     h=gca;
     set(h,'fontsize',28);
-     
+    
 end
 grid on
 %legend('Location','northeastoutside')

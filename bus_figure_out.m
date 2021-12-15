@@ -3,7 +3,7 @@ function bus_figure_out(type,figure_name,data,xll,yll,xlabel_name,ylabel_name,po
 
 if type == "bar"
     a=figure('Name',num2str(figure_name),'NumberTitle','on','Units','normalized','OuterPosition',pos);
-    bar(data,1,'stacked' ) ; hold on
+    bar(data,0.75,'stacked' ) ; hold on
     if isempty(color)==0
         colororder(color)
     end
