@@ -50,7 +50,7 @@ elseif type == "plot"
     pbaspect([1.5 1 1]);
 elseif type == "plot_big"
     a=figure('Name',num2str(figure_name),'ToolBar','none','NumberTitle','on','Units','normalized','OuterPosition',pos);
-    bar(data,0.5,'stacked') ; hold on
+    plot(data,'LineWidth',3) ; hold on
     if isempty(color)==0
         colororder(color)
     end

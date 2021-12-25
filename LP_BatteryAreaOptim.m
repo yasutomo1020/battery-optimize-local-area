@@ -12,7 +12,7 @@ load('const.mat');
 nPeriods=24;%期間数
 nArea=3;%エリア数
 ev_rate=0.5;
-pv_rate=1;%限界：0.9662(融通なし)1.826（融通あり）
+pv_rate=0.75;%限界：0.9662(融通なし)1.826（融通あり）
 evload_rate=1;
 Area_ev=[2 10 10]*ev_rate;%EV台数
 Area_demand=[500 35 35];%需要家数
@@ -28,7 +28,8 @@ need_power=netload;
 levelling_level=mean(netload);
 %levelling_level=400;
 initial_soc=0.5;%初期SOC
-pws_capacity=10000;%配電線容量(10MW)
+pws_capacity=6000;%配電線容量(6MVA)
+%pws_capacity=0;
 b_w=0.00001;%蓄電池排他制約の重み係数
 d_w=0.00001;%エリア間電力融通(配電損失)排他制約重み係数
 %b_w=0;d_w=0;
@@ -161,7 +162,7 @@ if isempty(fval)==0
     fprintf('・電力融通量：%g\n',sum(sum(outx(:,7:12)).'));
     
     %% figure出力
-    save=1;
+    save=0;
     %figure_out('plot','ネットロード',netload,[0 25],[-3000 3000],'Time [hour]','netload[kWh]',[1.25 0.0 0.25 0.3],["Residential";"Commercial";"Industrial"],save)
     figure_out('plot','SOC推移（LP）',socx,[1 25],[0 1],'Time [hour]','State Of Charge',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],[],save)
     %figure_out('bar','最適化前flow',before_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.25 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
