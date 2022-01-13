@@ -12,7 +12,7 @@ load('const.mat');
 nPeriods=24;%期間数
 nArea=3;%エリア数
 ev_rate=0.5;
-pv_rate=0.9;%限界：0.9662(融通なし)1.826（融通あり）
+pv_rate=0.5;%限界：0.9662(融通なし)1.826（融通あり）
 evload_rate=1;
 Area_ev=[2 10 10]*ev_rate;%EV台数
 Area_demand=[500 35 35];%需要家数
@@ -163,15 +163,15 @@ if isempty(fval)==0
     fprintf('・電力融通量：%g\n',sum(sum(outx(:,7:12)).'));
     
     %% figure出力
-    filename="";
-    save=0;%1ならば保存する
-    %figure_out('plot','ネットロード',netload,[0 25],[-3000 3000],'Time [hour]','netload[kWh]',[1.25 0.0 0.25 0.3],["Residential";"Commercial";"Industrial"],save)
-    figure_out('plot','SOC推移プロット'+filename,socx,[1 25],[0 1],'Time [hour]','State Of Charge',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],{'#7030A0','#00B050','#A5A5A5'},save)
+   % filename="LP,ev0.5,pv1";
+   filename="LP,ev"+ev_rate+",pv"+pv_rate;
+    save=1;%1ならば保存する
+    figure_out('plot',filename+'SOC推移プロット',socx,[1 25],[0 1],'時刻','State Of Charge',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],{'#7030A0','#00B050','#A5A5A5'},'%,.1f',save)
     %figure_out('bar','最適化前flow',before_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.25 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     %figure_out('bar','最適化後flow',after_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.0 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
-    figure_out('plot','最適化結果'+filename,result_flow,[0 25],[0 3000],'Time [hour]','配電用変電所からの潮流[kW]',[1.0 0.55 0.25 0.4],["最適化前","最適化後"],{'#C00000','#0000ff'},save)
-    figure_out('heatmap','充放電状態'+filename,outx,[],[],[],'Time [hour]',[1.0 0.0 0.5 0.55],[],[],save)
-    figure_out('plot_big','充放電状態プロット'+filename,outx(:,1:6),[0 25],[0 1090],'Time [hour]','電力量[kW]',[1.5 0.5 0.5 0.45],["蓄電池放電量（住宅）","蓄電池放電量（商業）","蓄電池放電量（工業）","蓄電池充電量（住宅）","蓄電池充電量（商業）","蓄電池充電量（工業）"],[],save)
-   figure_out('plot_big','電力融通状態プロット'+filename,outx(:,7:12),[0 25],[0 1090],'Time [hour]','電力量[kW]',[1.5 0 0.5 0.45],["エリア間電力融通（住宅→商業）","エリア間電力融通（商業→工業）","エリア間電力融通（工業→住宅）","エリア間電力融通（商業→住宅）","エリア間電力融通（工業→商業）","エリア間電力融通（住宅→工業）"],[],save)
+    figure_out('plot',filename+'最適化結果',result_flow,[0 25],[0 3300],'時刻','配電用変電所からの潮流[kW]',[1.0 0.55 0.25 0.4],["最適化前","最適化後"],{'#C00000','#0000ff'},'%,.0f',save)
+    %figure_out('heatmap',filename+'充放電状態',outx,[],[],[],'Time [hour]',[1.0 0.0 0.5 0.55],[],[],save)
+    figure_out('plot_big',filename+'充放電状態プロット',outx(:,1:6),[0 25],[0 1090],'時刻','電力量[kW]',[1.5 0.5 0.5 0.45],["蓄電池放電量（住宅）","蓄電池放電量（商業）","蓄電池放電量（工業）","蓄電池充電量（住宅）","蓄電池充電量（商業）","蓄電池充電量（工業）"],[],'%,.0f',save)
+   figure_out('plot_big',filename+'電力融通状態プロット',outx(:,7:12),[0 25],[0 1090],'Time [hour]','電力量[kW]',[1.5 0 0.5 0.45],["エリア間電力融通（住宅→商業）","エリア間電力融通（商業→工業）","エリア間電力融通（工業→住宅）","エリア間電力融通（商業→住宅）","エリア間電力融通（工業→商業）","エリア間電力融通（住宅→工業）"],[],'%,.1f',save)
 
 end
