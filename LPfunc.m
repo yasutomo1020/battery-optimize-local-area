@@ -1,4 +1,4 @@
-function [out_sum] = LPfunc(b_w,d_w,battery_capacity)
+function [out_sum] = LPfunc(b_w,d_w,battery_capacity,pv_rate)
 %UNTITLED この関数の概要をここに記述
 %   詳細説明をここに記述
 %% ヘッダー
@@ -15,7 +15,7 @@ load('const.mat');
 nPeriods=24;%期間数
 nArea=3;%エリア数
 ev_rate=0.5;
-pv_rate=1;%限界：0.9662(融通なし)1.826（融通あり）
+% pv_rate=0.5;%限界：0.9662(融通なし)1.826（融通あり）
 evload_rate=1;
 Area_ev=[2 10 10]*ev_rate;%EV台数
 Area_demand=[500 35 35];%需要家数
@@ -31,7 +31,7 @@ need_power=netload;
 levelling_level=mean(netload);
 %levelling_level=400;
 initial_soc=0.5;%初期SOC
-pws_capacity=10000;%配電線容量(10MW)
+pws_capacity=6000;%配電線容量(10MW)
 %b_w=0.00001;%蓄電池排他制約の重み係数
 %d_w=0.00001;%エリア間電力融通(配電損失)排他制約重み係数
 %b_w=0;d_w=0;

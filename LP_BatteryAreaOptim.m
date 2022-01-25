@@ -12,7 +12,7 @@ load('const.mat');
 nPeriods=24;%期間数
 nArea=3;%エリア数
 ev_rate=0.5;
-pv_rate=0.75;%限界：0.9662(融通なし)1.826（融通あり）
+pv_rate=1;%限界：0.9662(融通なし)1.826（融通あり）
 evload_rate=1;
 Area_ev=[2 10 10]*ev_rate;%EV台数
 Area_demand=[500 35 35];%需要家数
@@ -174,7 +174,7 @@ if isempty(fval)==0
     %% figure出力
    % filename="LP,ev0.5,pv1";
    filename="LP,ev"+ev_rate+",pv"+pv_rate+'';
-    save=1;%1ならば保存する
+    save=0;%1ならば保存する
     figure_out('plot',filename+'SOC推移プロット',socx,[1 25],[0 1],'時刻','State Of Charge',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],{'#7030A0','#00B050','#A5A5A5'},'%,.1f',save)
     %figure_out('bar','最適化前flow',before_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.25 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     %figure_out('bar','最適化後flow',after_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.0 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
