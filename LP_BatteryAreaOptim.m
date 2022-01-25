@@ -12,7 +12,7 @@ load('const.mat');
 nPeriods=24;%期間数
 nArea=3;%エリア数
 ev_rate=0.5;
-pv_rate=1;%限界：0.9662(融通なし)1.826（融通あり）
+pv_rate=0.5;%限界：0.9662(融通なし)1.826（融通あり）
 evload_rate=1;
 Area_ev=[2 10 10]*ev_rate;%EV台数
 Area_demand=[500 35 35];%需要家数
@@ -35,7 +35,8 @@ d_w=0.00001;%エリア間電力融通(配電損失)排他制約重み係数
 %b_w=0;d_w=0;
 A_w=1;%目的関数設定制約条件の重み係数
 initial_capacity=battery_capacity_area*initial_soc;%初期容量
-before_flow=demand_data+ev_out*Area_ev.*Area_demand;%EV負荷含む潮流
+before_flow=netload;
+%before_flow=demand_data+ev_out*Area_ev.*Area_demand;%EV負荷含む潮流
 
 %% 解の上下限設定
 battery_out=3*(Area_ev.*Area_demand);
