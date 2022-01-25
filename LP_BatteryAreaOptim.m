@@ -12,7 +12,7 @@ load('const.mat');
 nPeriods=24;%期間数
 nArea=3;%エリア数
 ev_rate=0.5;
-pv_rate=0.5;%限界：0.9662(融通なし)1.826（融通あり）
+pv_rate=1;%限界：0.9662(融通なし)1.826（融通あり）
 evload_rate=1;
 Area_ev=[2 10 10]*ev_rate;%EV台数
 Area_demand=[500 35 35];%需要家数
@@ -23,16 +23,14 @@ pv_out_6h=circshift(pv_out_1kw,19);%今庄エリアで片面受光型傾斜角30
 pv_capacity=4.1;%基準PV容量
 pv_out=pv_capacity*[1 2.1301 2.1988].*pv_out_6h*pv_rate;%住宅を１として、屋根面積比で計算
 netload=demand_data+ev_out*evload_rate*Area_ev.*Area_demand-pv_out.*Area_demand;%ネットロード計算
-need_power=netload;
 %levelling_level=mean(demand_data);%目標のレベル
 levelling_level=mean(netload);
-%levelling_level=400;
 initial_soc=0.5;%初期SOC
 pws_capacity=6000;%配電線容量(6MW)
 %pws_capacity=0;
 b_w=0.00001;%蓄電池排他制約の重み係数(基準：1.0*10^-5)
-d_w=0.00001;%エリア間電力融通(配電損失)排他制約重み係数
-%b_w=0;d_w=0;
+d_w=0.00001;%エリア間電力融通(配電損失)排他制約重み係数s
+% b_w=0;d_w=0;
 A_w=1;%目的関数設定制約条件の重み係数
 initial_capacity=battery_capacity_area*initial_soc;%初期容量
 before_flow=netload;
@@ -78,7 +76,7 @@ b_h=ones(nPeriods,3).*(battery_capacity_area-initial_capacity);%蓄電池容量�
 b_cap=[b_l(:);b_h(:);];
 %需給バランス制約
 A_load=cat(1,A1_eye,A2_eye,A3_eye);
-b_load=need_power(:);%必要電力量（ネットロード）
+b_load=netload(:);%必要電力量（ネットロード）
 %b_load=before_flow(:);
 %目的関数設定制約
 A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye];
@@ -140,9 +138,9 @@ if isempty(fval)==0
     socx=zeros(nPeriods+1,3);
     socx(1,:)=initial_capacity;
     for h=1:nPeriods
-%             socx(h+1,1)=socx(h,1)-outx(h,1)+outx(h,4)-outx(h,7)-outx(h,12)+outx(h,9)+outx(h,10);
-%             socx(h+1,2)=socx(h,2)-outx(h,2)+outx(h,5)-outx(h,8)-outx(h,10)+outx(h,7)+outx(h,11);
-%             socx(h+1,3)=socx(h,3)-outx(h,3)+outx(h,6)-outx(h,9)-outx(h,11)+outx(h,8)+outx(h,12);
+        %             socx(h+1,1)=socx(h,1)-outx(h,1)+outx(h,4)-outx(h,7)-outx(h,12)+outx(h,9)+outx(h,10);
+        %             socx(h+1,2)=socx(h,2)-outx(h,2)+outx(h,5)-outx(h,8)-outx(h,10)+outx(h,7)+outx(h,11);
+        %             socx(h+1,3)=socx(h,3)-outx(h,3)+outx(h,6)-outx(h,9)-outx(h,11)+outx(h,8)+outx(h,12);
         socx(h+1,1)=socx(h,1)-outx(h,1)+outx(h,4);
         socx(h+1,2)=socx(h,2)-outx(h,2)+outx(h,5);
         socx(h+1,3)=socx(h,3)-outx(h,3)+outx(h,6);
@@ -152,13 +150,13 @@ if isempty(fval)==0
     
     %% 合計
     out_b=zeros(nPeriods,3);
-        out_b(:,1)=outx(:,1)-outx(:,4)+(-outx(:,7)+outx(:,9)+outx(:,10)-outx(:,12));
+    out_b(:,1)=outx(:,1)-outx(:,4)+(-outx(:,7)+outx(:,9)+outx(:,10)-outx(:,12));
     out_b(:,2)=outx(:,2)-outx(:,5)+(+outx(:,7)-outx(:,8)-outx(:,10)+outx(:,11));
     out_b(:,3)=outx(:,3)-outx(:,6)+(+outx(:,8)-outx(:,9)-outx(:,11)+outx(:,12));
-
-%     out_b(:,1)=outx(:,1)-outx(:,4)-(-outx(:,7)+outx(:,9)+outx(:,10)-outx(:,12));
-%     out_b(:,2)=outx(:,2)-outx(:,5)-(+outx(:,7)-outx(:,8)-outx(:,10)+outx(:,11));
-%     out_b(:,3)=outx(:,3)-outx(:,6)-(+outx(:,8)-outx(:,9)-outx(:,11)+outx(:,12));
+    
+    %     out_b(:,1)=outx(:,1)-outx(:,4)-(-outx(:,7)+outx(:,9)+outx(:,10)-outx(:,12));
+    %     out_b(:,2)=outx(:,2)-outx(:,5)-(+outx(:,7)-outx(:,8)-outx(:,10)+outx(:,11));
+    %     out_b(:,3)=outx(:,3)-outx(:,6)-(+outx(:,8)-outx(:,9)-outx(:,11)+outx(:,12));
     after_flow=netload-out_b;
     out_symbol=zeros(nPeriods,6);
     for i=1:3
@@ -166,22 +164,24 @@ if isempty(fval)==0
         out_symbol(:,i+3)=outx(:,i+6)-outx(:,i+3);
     end
     result_flow=[ sum(before_flow.').'  sum(after_flow.').'];
-    
+    cover_plot_r=[outx(:,1) outx(:,9) outx(:,10) pv_out(:,1)*Area_demand(1,1)];
+    cover_plot_c=[outx(:,2) outx(:,7) outx(:,11) pv_out(:,2)*Area_demand(1,2)];
+    cover_plot_i=[outx(:,3) outx(:,8) outx(:,12) pv_out(:,3)*Area_demand(1,3)];
     fprintf('・MAE\n最適化前：%g\n最適化後：%g\n',string(round(mae(before_flow),4)),string(round(mae(after_flow),4)));
     fprintf('・RMSE\n最適化前：%g\n最適化後：%g\n',string(round(rms(sum(before_flow.').',sum(levelling_level)),4)),string(round(rms(sum(after_flow.').',sum(levelling_level)),4)));
     fprintf('・蓄電池充放電量：%g\n',sum(sum(outx(:,1:6)).'));
     fprintf('・電力融通量：%g\n',sum(sum(outx(:,7:12)).'));
     
     %% figure出力
-   % filename="LP,ev0.5,pv1";
-   filename="LP,ev"+ev_rate+",pv"+pv_rate+'';
+    % filename="LP,ev0.5,pv1";
+    filename="LP,ev"+ev_rate+",pv"+pv_rate+'';
     save=0;%1ならば保存する
     figure_out('plot',filename+'SOC推移プロット',socx,[1 25],[0 1],'時刻','State Of Charge',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],{'#7030A0','#00B050','#A5A5A5'},'%,.1f',save)
     %figure_out('bar','最適化前flow',before_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.25 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
     %figure_out('bar','最適化後flow',after_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.0 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
-    figure_out('plot',filename+'最適化結果',result_flow,[0 25],[0 3300],'時刻','配電用変電所からの潮流[kW]',[1.0 0.55 0.25 0.4],["最適化前","最適化後"],{'#C00000','#0000ff'},'%,.0f',save)
+    figure_out('plot',filename+'最適化結果',result_flow,[0 25],[0 3000],'時刻','配電用変電所からの潮流[kW]',[1.0 0.55 0.25 0.4],["最適化前","最適化後"],{'#C00000','#0000ff'},'%,.0f',save)
     figure_out('heatmap',filename+'充放電状態',outx,[],[],[],'Time [hour]',[1.0 0.0 0.5 0.55],[],[],'',0)
     figure_out('plot_big',filename+'充放電状態プロット',outx(:,1:6),[0 25],[0 1090],'時刻','電力量[kW]',[1.5 0.5 0.5 0.45],["蓄電池放電量（住宅）","蓄電池放電量（商業）","蓄電池放電量（工業）","蓄電池充電量（住宅）","蓄電池充電量（商業）","蓄電池充電量（工業）"],[],'%,.0f',save)
-   figure_out('plot_big',filename+'電力融通状態プロット',outx(:,7:12),[0 25],[0 1090],'時刻','電力量[kW]',[1.5 0 0.5 0.45],["エリア間電力融通（住宅→商業）","エリア間電力融通（商業→工業）","エリア間電力融通（工業→住宅）","エリア間電力融通（商業→住宅）","エリア間電力融通（工業→商業）","エリア間電力融通（住宅→工業）"],[],'%,.1f',save)
-
+    figure_out('plot_big',filename+'電力融通状態プロット',outx(:,7:12),[0 25],[0 1090],'時刻','電力量[kW]',[1.5 0 0.5 0.45],["エリア間電力融通（住宅→商業）","エリア間電力融通（商業→工業）","エリア間電力融通（工業→住宅）","エリア間電力融通（商業→住宅）","エリア間電力融通（工業→商業）","エリア間電力融通（住宅→工業）"],[],'%,.1f',save)
+    
 end
