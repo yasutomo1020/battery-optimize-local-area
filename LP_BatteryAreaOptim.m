@@ -125,7 +125,7 @@ toc
 % [x,fval,eflag,out] = lsqlin(f,1,A,b,Aeq,beq,lb,ub,options);
 
 %% 解の分解整理
-if isempty(fval)==0
+if isempty(fval)==0%もし解があったら
     outx=zeros(nPeriods,(numel(f)-nPeriods)/nPeriods);
     for n=1:(numel(f)-nPeriods)/nPeriods
         for h=1:nPeriods
@@ -133,7 +133,19 @@ if isempty(fval)==0
         end
     end
     outx=round(outx,2);
-    
+    %1列目：住宅エリア蓄電池放電量
+    %2列目：商業エリア蓄電池放電量
+    %3列目：工業エリア蓄電池放電量
+    %4列目：住宅エリア蓄電池充電量
+    %5列目：商業エリア蓄電池充電量
+    %6列目：工業エリア蓄電池充電量
+    %7列目：住宅エリアから商業エリアへの電力融通量
+    %8列目：商業エリアから工業エリアへの電力融通量
+    %9列目：工業エリアから住宅エリアへの電力融通量
+    %10列目：商業エリアから住宅エリアへの電力融通量
+    %11列目：工業エリアから商業エリアへの電力融通量
+    %12列目：住宅エリアから工業エリアへの電力融通量
+        
     %% 容量（SOC）計算
     socx=zeros(nPeriods+1,3);
     socx(1,:)=initial_capacity;
@@ -164,9 +176,12 @@ if isempty(fval)==0
         out_symbol(:,i+3)=outx(:,i+6)-outx(:,i+3);
     end
     result_flow=[ sum(before_flow.').'  sum(after_flow.').'];
-    cover_plot_r=[outx(:,1) outx(:,9) outx(:,10) pv_out(:,1)*Area_demand(1,1)];
-    cover_plot_c=[outx(:,2) outx(:,7) outx(:,11) pv_out(:,2)*Area_demand(1,2)];
-    cover_plot_i=[outx(:,3) outx(:,8) outx(:,12) pv_out(:,3)*Area_demand(1,3)];
+    %     cover_plot_r=[outx(:,1) outx(:,9) outx(:,10) pv_out(:,1)*Area_demand(1,1)];
+    %     cover_plot_c=[outx(:,2) outx(:,7) outx(:,11) pv_out(:,2)*Area_demand(1,2)];
+    %     cover_plot_i=[outx(:,3) outx(:,8) outx(:,12) pv_out(:,3)*Area_demand(1,3)];
+    cover_plot_r=[outx(:,1) -outx(:,4) -outx(:,7) outx(:,9) outx(:,10) -outx(:,12) pv_out(:,1)*Area_demand(1,1)];
+    cover_plot_c=[outx(:,2) -outx(:,5) outx(:,7) -outx(:,8) -outx(:,10) outx(:,11) pv_out(:,2)*Area_demand(1,2)];
+    cover_plot_i=[outx(:,3) -outx(:,6) outx(:,8) -outx(:,9) -outx(:,11) outx(:,12) pv_out(:,3)*Area_demand(1,3)];
     fprintf('・MAE\n最適化前：%g\n最適化後：%g\n',string(round(mae(before_flow),4)),string(round(mae(after_flow),4)));
     fprintf('・RMSE\n最適化前：%g\n最適化後：%g\n',string(round(rms(sum(before_flow.').',sum(levelling_level)),4)),string(round(rms(sum(after_flow.').',sum(levelling_level)),4)));
     fprintf('・蓄電池充放電量：%g\n',sum(sum(outx(:,1:6)).'));
