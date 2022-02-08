@@ -1,4 +1,4 @@
-function [out_sum] = LPfunc(b_w,d_w,battery_capacity,pv_rate)
+function [out_sum] = LPfunc(b_w,d_w,battery_capacity)
 %UNTITLED この関数の概要をここに記述
 %   詳細説明をここに記述
 %% ヘッダー
@@ -8,36 +8,36 @@ function [out_sum] = LPfunc(b_w,d_w,battery_capacity,pv_rate)
 % DateString = datestr(dt,'yyyy年mm月dd日HH時MM分ss秒FFF');
 % disp(DateString)
 %clear;
-close all;
+%close all;
 load('const.mat');
 
 %% 定数変数定義、検討条件
 nPeriods=24;%期間数
 nArea=3;%エリア数
 ev_rate=0.5;
-% pv_rate=0.5;%限界：0.9662(融通なし)1.826（融通あり）
+pv_rate=1;%限界：0.9662(融通なし)1.826（融通あり）
 evload_rate=1;
 Area_ev=[2 10 10]*ev_rate;%EV台数
 Area_demand=[500 35 35];%需要家数
-%battery_capacity=12;
+% battery_capacity=12;
 battery_capacity_area=battery_capacity*(Area_ev.*Area_demand);%バッテリー容量
 demand_data=demand_data.*Area_demand;%需要合計
 pv_out_6h=circshift(pv_out_1kw,19);%今庄エリアで片面受光型傾斜角30°PV容量1kwのカーブ、６時からに変更
 pv_capacity=4.1;%基準PV容量
 pv_out=pv_capacity*[1 2.1301 2.1988].*pv_out_6h*pv_rate;%住宅を１として、屋根面積比で計算
 netload=demand_data+ev_out*evload_rate*Area_ev.*Area_demand-pv_out.*Area_demand;%ネットロード計算
-need_power=netload;
 %levelling_level=mean(demand_data);%目標のレベル
 levelling_level=mean(netload);
-%levelling_level=400;
 initial_soc=0.5;%初期SOC
-pws_capacity=6000;%配電線容量(10MW)
-%b_w=0.00001;%蓄電池排他制約の重み係数
-%d_w=0.00001;%エリア間電力融通(配電損失)排他制約重み係数
-%b_w=0;d_w=0;
+pws_capacity=6000;%配電線容量(6MW)
+%pws_capacity=0;
+% b_w=0.0001;%蓄電池排他制約の重み係数(基準：1.0*10^-5)
+% d_w=0.0001;%エリア間電力融通(配電損失)排他制約重み係数
+% b_w=0;d_w=0;
 A_w=1;%目的関数設定制約条件の重み係数
 initial_capacity=battery_capacity_area*initial_soc;%初期容量
-before_flow=demand_data+ev_out*Area_ev.*Area_demand;%EV負荷含む潮流
+before_flow=netload;
+%before_flow=demand_data+ev_out*Area_ev.*Area_demand;%EV負荷含む潮流
 
 %% 解の上下限設定
 battery_out=3*(Area_ev.*Area_demand);
@@ -60,13 +60,17 @@ zero_1=zeros(nPeriods);%零行列
 A1_eye=cat(2,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,one_eye,zero_1,-one_eye,zero_1);
 A2_eye=cat(2,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1,zero_1);
 A3_eye=cat(2,zero_1,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,one_eye,-one_eye,zero_1,-one_eye,one_eye,zero_1);
+% A1_eye=cat(2,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
+% A2_eye=cat(2,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-zero_1,zero_1,-zero_1,zero_1,zero_1,zero_1);
+% A3_eye=cat(2,zero_1,zero_1,one_eye,zero_1,zero_1,-one_eye,zero_1,zero_1,-zero_1,zero_1,-zero_1,zero_1,zero_1);
+
 A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 %蓄電池容量制約ver.2（SOCまだ）
-% A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,one_tril,zero_1,-one_tril,zero_1);
-% A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,-one_tril,zero_1,-one_tril,one_tril,zero_1,zero_1);
-% A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,one_tril,-one_tril,zero_1,-one_tril,one_tril,zero_1);
+% A1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,one_tril,zero_1,one_tril,-one_tril,zero_1,one_tril,zero_1);
+% A2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,-one_tril,one_tril,zero_1,one_tril,-one_tril,zero_1,zero_1);
+% A3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,-one_tril,one_tril,zero_1,one_tril,-one_tril,zero_1);
 %蓄電池EV容量制約
 A_cap=cat(1,A1_tril,A2_tril,A3_tril);
 A_cap=[A_cap;-A_cap;];
@@ -75,7 +79,8 @@ b_h=ones(nPeriods,3).*(battery_capacity_area-initial_capacity);%蓄電池容量�
 b_cap=[b_l(:);b_h(:);];
 %需給バランス制約
 A_load=cat(1,A1_eye,A2_eye,A3_eye);
-b_load=need_power(:);%必要電力量（ネットロード）
+b_load=netload(:);%必要電力量（ネットロード）
+%b_load=before_flow(:);
 %目的関数設定制約
 A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye];
 A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye];
@@ -84,8 +89,8 @@ b_f_2=A_w*sum((-netload+levelling_level).').';
 A_f=[A_f_1;A_f_2;];
 b_f=[b_f_1;b_f_2;];
 %制約条件まとめ
-sw_c=1;
-sw_l=1;
+sw_c=1;%1で容量制約あり，0で容量制約なし
+sw_l=1;%1で需給バランス制約あり，0で需給バランス制約なし
 A=[sw_c*A_cap;sw_l*A_load;A_f];
 b=[sw_c*b_cap;sw_l*b_load;b_f];
 %A=[];b=[];
@@ -107,6 +112,7 @@ intcon=[];
 %% 最適化
 options =[];
 % options = optimoptions('intlinprog','CutMaxIterations',25);
+options = optimoptions('intlinprog','ConstraintTolerance',1e-9);
 %options = optimoptions('intlinprog','CutGeneration','advanced');
 % options = optimoptions('intlinprog','IntegerPreprocess','advanced');
 %options = optimoptions('intlinprog','RootLPAlgorithm','primal-simplex');
@@ -115,9 +121,10 @@ options =[];
 % options = optimoptions('intlinprog','Heuristics','advanced');
 %options = optimoptions('intlinprog','BranchRule ',"strongpscost");
 %options = optimoptions('linprog','Algorithm','interior-point');
-options = optimoptions('intlinprog','Display','off');
-[x,fval] = intlinprog(f,intcon,A,b,Aeq,beq,lb,ub,options);
+tic
+[x,fval,eflag,out] = intlinprog(f,intcon,A,b,Aeq,beq,lb,ub,options);
 %[x,fval,eflag,out] = linprog(f,A,b,Aeq,beq,lb,ub,options);
+toc
 % [x,fval,eflag,out] = lsqlin(f,1,A,b,Aeq,beq,lb,ub,options);
 
 %% 解の分解整理
