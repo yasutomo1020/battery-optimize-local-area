@@ -85,6 +85,8 @@ A_load=cat(1,A1_eye,A2_eye,A3_eye);
 b_load=netload(:);%必要電力量（ネットロード）
 
 %目的関数設定制約
+%配電線潮流とネットロードの差の絶対値を最小化することで
+%平準化を行います。
 A_f_1=[A_w*[one_eye one_eye one_eye -one_eye -one_eye -one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye];
 A_f_2=[A_w*[-one_eye -one_eye -one_eye one_eye one_eye one_eye zero_1 zero_1 zero_1 zero_1 zero_1 zero_1] -one_eye];
 b_f_1=A_w*sum((netload-levelling_level).').';
@@ -100,9 +102,6 @@ b=[sw_c*b_cap;sw_l*b_load;b_f];
 %A=[];b=[];
 
 %% 等式制約
-% Aeq1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,one_tril,zero_1,zero_1,zero_1,zero_1,one_tril,zero_1);
-% Aeq2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,one_tril,zero_1,one_tril,zero_1,zero_1,zero_1);
-% Aeq3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,one_tril,zero_1,one_tril,zero_1,zero_1);
 Aeq1_tril=cat(2,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 Aeq2_tril=cat(2,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
 Aeq3_tril=cat(2,zero_1,zero_1,one_tril,zero_1,zero_1,-one_tril,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1,zero_1);
@@ -114,22 +113,11 @@ beq=[0;0;0;];
 %% 整数制約
 intcon=[];
 %% 最適化
-options =[];
-% options = optimoptions('intlinprog','CutMaxIterations',25);
-options = optimoptions('intlinprog','ConstraintTolerance',1e-9);
-%options = optimoptions('intlinprog','CutGeneration','advanced');
-% options = optimoptions('intlinprog','IntegerPreprocess','advanced');
-%options = optimoptions('intlinprog','RootLPAlgorithm','primal-simplex');
-%options = optimoptions('intlinprog','RootLPAlgorithm','dual-simplex');
-% options = optimoptions('intlinprog','HeuristicsMaxNodes',10000);
-% options = optimoptions('intlinprog','Heuristics','advanced');
-%options = optimoptions('intlinprog','BranchRule ',"strongpscost");
-%options = optimoptions('linprog','Algorithm','interior-point');
-tic
-[x,fval,eflag,out] = intlinprog(f,intcon,A,b,Aeq,beq,lb,ub,options);
-%[x,fval,eflag,out] = linprog(f,A,b,Aeq,beq,lb,ub,options);
+options =[];%オプション
+tic%計算時間測定
+[x,fval,eflag,out] = intlinprog(f,intcon,A,b,Aeq,beq,lb,ub,options);%ソルバー実行
+%f:目的関数，intcon:整数制約，A:不等式制約行列，b:不等式制約ベクトル，Aeq:等式制約行列，beq:等式制約ベクトル，lb:解の下限，ub:解の上限。options:ソルバーのオプション
 toc
-% [x,fval,eflag,out] = lsqlin(f,1,A,b,Aeq,beq,lb,ub,options);
 
 %% 解の分解整理
 if isempty(fval)==0%もし解があったら
@@ -152,14 +140,12 @@ if isempty(fval)==0%もし解があったら
     %10列目：商業エリアから住宅エリアへの電力融通量
     %11列目：工業エリアから商業エリアへの電力融通量
     %12列目：住宅エリアから工業エリアへの電力融通量
-        
-    %% 容量（SOC）計算
+    
+    %% SOC計算
     socx=zeros(nPeriods+1,3);
     socx(1,:)=initial_capacity;
     for h=1:nPeriods
-        %             socx(h+1,1)=socx(h,1)-outx(h,1)+outx(h,4)-outx(h,7)-outx(h,12)+outx(h,9)+outx(h,10);
-        %             socx(h+1,2)=socx(h,2)-outx(h,2)+outx(h,5)-outx(h,8)-outx(h,10)+outx(h,7)+outx(h,11);
-        %             socx(h+1,3)=socx(h,3)-outx(h,3)+outx(h,6)-outx(h,9)-outx(h,11)+outx(h,8)+outx(h,12);
+        %現在のSOC=前のSOC－充放電量
         socx(h+1,1)=socx(h,1)-outx(h,1)+outx(h,4);
         socx(h+1,2)=socx(h,2)-outx(h,2)+outx(h,5);
         socx(h+1,3)=socx(h,3)-outx(h,3)+outx(h,6);
@@ -167,7 +153,7 @@ if isempty(fval)==0%もし解があったら
     end
     socx=round(socx,4)./battery_capacity_area;
     
-    %% 合計
+    %% 合計値計算
     out_b=zeros(nPeriods,3);
     out_b(:,1)=outx(:,1)-outx(:,4)+(-outx(:,7)+outx(:,9)+outx(:,10)-outx(:,12));
     out_b(:,2)=outx(:,2)-outx(:,5)+(+outx(:,7)-outx(:,8)-outx(:,10)+outx(:,11));
@@ -183,9 +169,6 @@ if isempty(fval)==0%もし解があったら
         out_symbol(:,i+3)=outx(:,i+6)-outx(:,i+3);
     end
     result_flow=[ sum(before_flow.').'  sum(after_flow.').'];
-    %     cover_plot_r=[outx(:,1) outx(:,9) outx(:,10) pv_out(:,1)*Area_demand(1,1)];
-    %     cover_plot_c=[outx(:,2) outx(:,7) outx(:,11) pv_out(:,2)*Area_demand(1,2)];
-    %     cover_plot_i=[outx(:,3) outx(:,8) outx(:,12) pv_out(:,3)*Area_demand(1,3)];
     cover_plot_r=[outx(:,1) -outx(:,4) -outx(:,7) outx(:,9) outx(:,10) -outx(:,12) pv_out(:,1)*Area_demand(1,1)];
     cover_plot_c=[outx(:,2) -outx(:,5) outx(:,7) -outx(:,8) -outx(:,10) outx(:,11) pv_out(:,2)*Area_demand(1,2)];
     cover_plot_i=[outx(:,3) -outx(:,6) outx(:,8) -outx(:,9) -outx(:,11) outx(:,12) pv_out(:,3)*Area_demand(1,3)];
@@ -194,9 +177,9 @@ if isempty(fval)==0%もし解があったら
     fprintf('・蓄電池充放電量：%g\n',sum(sum(outx(:,1:6)).'));
     fprintf('・電力融通量：%g\n',sum(sum(outx(:,7:12)).'));
     
-    %% figure出力
+    %% 結果・図出力
     filename="LP,ev"+ev_rate+",pv"+pv_rate+'';
-  %      filename="LP,ev"+ev_rate+",pv"+pv_rate+",wb"+b_w+"wd"+d_w+'';
+    %      filename="LP,ev"+ev_rate+",pv"+pv_rate+",wb"+b_w+"wd"+d_w+'';
     save=0;%1ならば保存する
     figure_out('plot',filename+'SOC推移プロット',socx,[1 25],[0 1],'時刻','State Of Charge',[1.25 0.55 0.25 0.4],["住宅エリア";"商業エリア";"工業エリア"],{'#7030A0','#00B050','#A5A5A5'},'%,.1f',save)
     %figure_out('bar','最適化前flow',before_flow,[0 25],[0 3000],'Time [hour]','Power Flow[kWh]',[1.25 0.3 0.25 0.3],["Residential";"Commercial";"Industrial"],[],save)
