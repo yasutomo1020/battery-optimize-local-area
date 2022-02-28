@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import datetime as dt
 import copy
-from matplotlib import cm
 plt.rcParams['font.family'] = "MS Gothic"
 
 
@@ -239,7 +238,7 @@ phi = 35.46
 lamda = 136.12
 # 1990~2009_csv_data -> list H,Hb,Hd ==================
 # csvファイル読み込み
-filename = (os.getcwd()+"/pv_create/H_imajyo.csv").replace('/', os.sep)
+filename = (os.getcwd()+"/H_imajyo.csv").replace('/', os.sep)
 H_data = pd.read_csv(filename, names=[
                      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
 # H_data = list(H_data.as_matrix().tolist())
@@ -400,7 +399,7 @@ if hoge[6] == 1:
 
 # CSVファイルで結果保存
 data = pd.DataFrame(Wpv_s_fi)
-data.to_csv("pv_create/pv_result.csv",
+data.to_csv("pv_result.csv",
             encoding="shift_jis", header=False, index=False)
 # =====================graf===================================================
 # ======快晴日===================================================

@@ -1,4 +1,5 @@
-%% 線形計画法チュートリアル(価格を最小化)
+%% 線形計画法チュートリアル
+%% セブンイレブンのメニューで，予算内で必要なカロリーとタンパク質を摂取しつつ価格を最小化する組み合わせを求める。
 clear;
 
 %% ヘッダー
@@ -9,11 +10,11 @@ disp(DateString)
 
 %% 変数に代入
 load('lp_testdata.mat', '-mat');
-lp_data_array = table2array(lp_data);
+lp_data_array = table2array(lp_testdata);
+intcon=[1:size(lp_data_array)];
 iii = 1;
 for iii=1:size(lp_data_array) 
     cost_data(iii)=str2double(lp_data_array(iii, 2));%値段
-    intcon(iii) =(iii);
 end
 for iii=1:size(lp_data_array) 
     cal_data(iii)=str2double(lp_data_array(iii, 3));%カロリー
@@ -23,8 +24,8 @@ for iii=1:size(lp_data_array)
 end
 
 budget = 500;%予算（円）
-need_cal = 700;%必要なカロリー（cal）
-need_pro = 20;%必要なタンパク質（g）
+need_cal = 800;%最低限摂取したいカロリー（kcal）
+need_pro = 10;%最低限摂取したいタンパク質（g）
 A = [cost_data;-cal_data;-pro_data;];
 b = [budget;-need_cal;-need_pro;];
 f = cost_data.';
@@ -48,7 +49,7 @@ for iii=1:size(f, 1)
          pro = pro + pro_data(iii) * round(x(iii));
     end
 end
-disp('合計金額：'+string(cst)+'円、合計カロリー：'+string(cal)+'cal、合計タンパク質：'+string(pro)+'g')
+disp('合計金額：'+string(cst)+'円，合計カロリー：'+string(cal)+'cal，合計タンパク質：'+string(pro)+'g')
 
  %% 練習
 % f = [2;3];%最小化したい関数を作成
